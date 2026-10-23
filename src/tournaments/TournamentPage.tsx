@@ -5,7 +5,6 @@ import { formatDay, formatRange } from '../lib/dates'
 import { POSITIONS, fullName } from '../players/model'
 import { usePlayers } from '../players/store'
 import { GameEditor } from './GameEditor'
-import { SquadEditor } from './SquadEditor'
 import { TournamentEditor } from './TournamentEditor'
 import { pruneLineup, squadNumberClashes, summarize, tournamentNumber, type Game } from './model'
 import { useGames, useTournament } from './store'
@@ -18,7 +17,6 @@ export function TournamentPage() {
   const games = useGames(tid)
   const players = usePlayers()
   const [editing, setEditing] = useState(false)
-  const [editingSquad, setEditingSquad] = useState(false)
   const [editingGame, setEditingGame] = useState<Game | 'new' | null>(null)
 
   for (const s of [tournament, games, players]) {
@@ -106,9 +104,9 @@ export function TournamentPage() {
                 {tour.squad.length}/{tour.squadSize}
               </span>
             </h2>
-            <button className="btn btn-small" onClick={() => setEditingSquad(true)}>
+            <Link to={`/tournaments/${tid}/squad`} className="btn btn-small">
               {t('squad.edit')}
-            </button>
+            </Link>
           </div>
           {tour.squad.length > tour.squadSize && (
             <p className="notice small">{t('squad.over', { count: tour.squad.length, size: tour.squadSize })}</p>
@@ -151,16 +149,6 @@ export function TournamentPage() {
 
       {editing && (
         <TournamentEditor tournament={tour} onClose={() => setEditing(false)} onDeleted={() => navigate('/tournaments')} />
-      )}
-      {editingSquad && (
-        <SquadEditor
-          tournamentId={tid}
-          squad={tour.squad}
-          numbers={tour.numbers}
-          squadSize={tour.squadSize}
-          players={players.players}
-          onClose={() => setEditingSquad(false)}
-        />
       )}
       {editingGame && (
         <GameEditor

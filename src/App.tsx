@@ -8,6 +8,7 @@ import { LoginPage } from './pages/LoginPage'
 import { NotInvitedPage } from './pages/NotInvitedPage'
 import { PlayersPage } from './players/PlayersPage'
 import { LineupPage } from './tournaments/LineupPage'
+import { SquadPage } from './tournaments/SquadPage'
 import { TournamentPage } from './tournaments/TournamentPage'
 import { TournamentsPage } from './tournaments/TournamentsPage'
 
@@ -40,6 +41,7 @@ function AppRoutes() {
         <Route path="players" element={<PlayersPage />} />
         <Route path="tournaments" element={<TournamentsPage />} />
         <Route path="tournaments/:tid" element={<TournamentPage />} />
+        <Route path="tournaments/:tid/squad" element={<SquadPage />} />
         <Route path="tournaments/:tid/games/:gid" element={<LineupPage />} />
         <Route path="coaches" element={<CoachesPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
