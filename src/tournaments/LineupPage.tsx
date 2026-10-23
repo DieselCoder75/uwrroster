@@ -79,7 +79,7 @@ export function LineupPage() {
   // Firestore applies our own writes to the snapshot immediately, so the game doc is the single source of truth.
   const lineup = pruneLineup(game.lineup, squad)
   const pool = squad.filter((id) => slotOf(lineup, id) === null)
-  const sum = summarize(lineup, tour.squadSize)
+  const sum = summarize(lineup)
   const prevGame = games.data[gameIndex - 1]
   const nextGame = games.data[gameIndex + 1]
   const copySource = games.data
@@ -216,7 +216,7 @@ export function LineupPage() {
                     zone={slot}
                     title={t(`slot.${slot}`)}
                     count={lineup[slot].length}
-                    limit={slotLimit(slot, tour.squadSize)}
+                    limit={slotLimit(slot)}
                     armed={!!selected}
                     onTap={() => onZoneTap(slot)}
                   >

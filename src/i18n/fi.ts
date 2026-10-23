@@ -126,7 +126,7 @@ export const fi = {
   'tournament.startDate': 'Alkaa',
   'tournament.endDate': 'Päättyy',
   'tournament.squadSize': 'Joukkueen koko',
-  'tournament.squadSizeHelp': 'Yleensä 15: 12 pelaajaa ja 3 vaihtoa. Joissain turnauksissa enemmän.',
+  'tournament.squadSizeHelp': 'Turnauksen joukkue voi olla isompi kuin 15. Jokaisen pelin kokoonpano on aina 15: 12 pelaajaa ja 3 vaihtoa.',
   'tournament.save': 'Tallenna',
   'tournament.cancel': 'Peruuta',
   'tournament.delete': 'Poista turnaus',
@@ -146,7 +146,7 @@ export const fi = {
   'games.add': 'Lisää peli',
   'games.empty': 'Ei vielä pelejä.',
   'games.lineup': 'Kokoonpano',
-  'games.lineupStatus': '{inGame}/12 + {subs} vaihtoa',
+  'games.lineupStatus': '{inGame}/12 + {subs}/3 vaihtoa',
   'games.lineupReady': 'Valmis',
   'games.lineupEmpty': 'Ei kokoonpanoa',
 
@@ -184,5 +184,5 @@ export const fi = {
   'lineup.fit.locked': 'Lukittu pelipaikkaan {pos}',
   'lineup.fit.notPlayable': 'Ei yleensä pelaa tällä paikalla',
   'lineup.over': 'Liikaa pelaajia',
-  'lineup.summary': 'Pelissä {inGame}/12 · Vaihdossa {subs}',
+  'lineup.summary': 'Pelissä {inGame}/12 · Vaihdossa {subs}/3',
 } as const

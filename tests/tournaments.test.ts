@@ -70,18 +70,18 @@ describe('position fit', () => {
 })
 
 describe('lineup summary', () => {
-  it('has room for 4 per position and the rest of the squad on the bench', () => {
-    expect(slotLimit('GK', 15)).toBe(4)
-    expect(slotLimit('SUB', 15)).toBe(3)
-    expect(slotLimit('SUB', 17)).toBe(5)
+  it('has room for 4 per position and 3 substitutes, whatever the squad size', () => {
+    expect(slotLimit('GK')).toBe(4)
+    expect(slotLimit('SUB')).toBe(3)
   })
 
-  it('is complete with 4+4+4 and a bench within the limit', () => {
+  it('is complete only with exactly 4+4+4 and 3 substitutes', () => {
     const four = (p: string) => [1, 2, 3, 4].map((i) => p + i)
     const full = lineup({ GK: four('g'), DEF: four('d'), ATT: four('a'), SUB: ['s1', 's2', 's3'] })
-    expect(summarize(full, 15)).toEqual({ inGame: 12, subs: 3, complete: true })
-    expect(summarize({ ...full, SUB: ['s1', 's2', 's3', 's4'] }, 15).complete).toBe(false)
-    expect(summarize({ ...full, GK: ['g1'] }, 15)).toMatchObject({ inGame: 9, complete: false })
+    expect(summarize(full)).toEqual({ inGame: 12, subs: 3, complete: true })
+    expect(summarize({ ...full, SUB: ['s1', 's2', 's3', 's4'] }).complete).toBe(false)
+    expect(summarize({ ...full, SUB: ['s1', 's2'] }).complete).toBe(false)
+    expect(summarize({ ...full, GK: ['g1'] })).toMatchObject({ inGame: 9, complete: false })
   })
 })
 

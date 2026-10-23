@@ -128,7 +128,7 @@ export const en: Messages = {
   'tournament.startDate': 'Starts',
   'tournament.endDate': 'Ends',
   'tournament.squadSize': 'Squad size',
-  'tournament.squadSizeHelp': 'Usually 15: 12 players and 3 substitutes. Some tournaments allow more.',
+  'tournament.squadSizeHelp': 'The tournament squad can be bigger than 15. Every game lineup is always 15: 12 players and 3 substitutes.',
   'tournament.save': 'Save',
   'tournament.cancel': 'Cancel',
   'tournament.delete': 'Delete tournament',
@@ -148,7 +148,7 @@ export const en: Messages = {
   'games.add': 'Add game',
   'games.empty': 'No games yet.',
   'games.lineup': 'Lineup',
-  'games.lineupStatus': '{inGame}/12 + {subs} subs',
+  'games.lineupStatus': '{inGame}/12 + {subs}/3 subs',
   'games.lineupReady': 'Ready',
   'games.lineupEmpty': 'No lineup',
 
@@ -186,5 +186,5 @@ export const en: Messages = {
   'lineup.fit.locked': 'Locked to {pos}',
   'lineup.fit.notPlayable': "Doesn't usually play here",
   'lineup.over': 'Too many players',
-  'lineup.summary': 'In game {inGame}/12 · Subs {subs}',
+  'lineup.summary': 'In game {inGame}/12 · Subs {subs}/3',
 }

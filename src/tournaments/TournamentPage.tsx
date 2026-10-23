@@ -69,7 +69,7 @@ export function TournamentPage() {
           {games.data.length === 0 && <p className="muted">{t('games.empty')}</p>}
           <ul className="list">
             {games.data.map((g) => {
-              const sum = summarize(pruneLineup(g.lineup, tour.squad), tour.squadSize)
+              const sum = summarize(pruneLineup(g.lineup, tour.squad))
               return (
                 <li key={g.id} className="game-row">
                   <Link to={`/tournaments/${tid}/games/${g.id}`} className="game-link">
