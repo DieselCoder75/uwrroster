@@ -84,19 +84,22 @@ export function fitIssue(player: Player, slot: Slot): FitIssue {
   return player.locked ? 'locked' : 'notPlayable'
 }
 
-export function slotLimit(slot: Slot, squadSize: number): number {
-  return slot === 'SUB' ? Math.max(0, squadSize - PER_POSITION * 3) : PER_POSITION
+/** Every game lineup is 15: 4 + 4 + 4 in the game and 3 substitutes, whatever the tournament squad size. */
+export const GAME_SUBS = 3
+
+export function slotLimit(slot: Slot): number {
+  return slot === 'SUB' ? GAME_SUBS : PER_POSITION
 }
 
 export type LineupSummary = { inGame: number; subs: number; complete: boolean }
 
-export function summarize(lineup: Lineup, squadSize: number): LineupSummary {
+export function summarize(lineup: Lineup): LineupSummary {
   const inGame = lineup.GK.length + lineup.DEF.length + lineup.ATT.length
   const complete =
     lineup.GK.length === PER_POSITION &&
     lineup.DEF.length === PER_POSITION &&
     lineup.ATT.length === PER_POSITION &&
-    lineup.SUB.length <= slotLimit('SUB', squadSize)
+    lineup.SUB.length === GAME_SUBS
   return { inGame, subs: lineup.SUB.length, complete }
 }
 
