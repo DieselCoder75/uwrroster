@@ -4,13 +4,15 @@ import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore'
 
 const env = import.meta.env
 
+// Firebase web config is public by design; access is enforced by Auth and firestore.rules.
+// Env vars override it, e.g. to point at the emulators (see .env.example).
 const app = initializeApp({
-  apiKey: env.VITE_FIREBASE_API_KEY || 'demo-key',
+  apiKey: env.VITE_FIREBASE_API_KEY || 'AIzaSyA6l-RFmOMy0dmmootdHzcyXzuMJ8H5KM8',
   authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || 'uwrroster.firebaseapp.com',
   projectId: env.VITE_FIREBASE_PROJECT_ID || 'uwrroster',
-  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: env.VITE_FIREBASE_APP_ID,
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || 'uwrroster.firebasestorage.app',
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || '421011583318',
+  appId: env.VITE_FIREBASE_APP_ID || '1:421011583318:web:dbd6d4d854e48b919de6f7',
 })
 
 export const auth = getAuth(app)

@@ -26,8 +26,7 @@ Project: `uwrroster`.
    **Email link (passwordless sign-in)**.
 2. **Authentication → Settings → Authorized domains**: make sure the hosting
    domains (`uwrroster.web.app`, `uwrroster.firebaseapp.com`) are listed.
-3. **Project settings → Your apps**: add a Web app, copy its config into
-   `.env.local` (see `.env.example`).
+3. **Firestore**: create the database (done).
 4. **Firestore**: create the first admin by hand. Add a document to the
    `coaches` collection with ID = your email in lowercase and fields
    `email` (same email) and `role` = `admin`.
@@ -37,15 +36,14 @@ Project: `uwrroster`.
 
 ```sh
 npm install
-cp .env.example .env.local   # fill in the web app config
-npm run dev
+npm run dev                  # connects to the real uwrroster project
 ```
 
-To develop without touching the real project, run the local emulators and set
-`VITE_USE_EMULATORS=true` and `VITE_FIREBASE_PROJECT_ID=demo-uwrroster` in
-`.env.local`:
+The web app config lives in `src/firebase.ts`. To develop without touching
+the real project, use the local emulators:
 
 ```sh
+cp .env.example .env.local   # switches the app to the emulators
 npm run emulators            # Auth + Firestore + emulator UI
 npm run dev
 ```
