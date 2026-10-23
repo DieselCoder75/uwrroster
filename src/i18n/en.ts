@@ -1,0 +1,55 @@
+import type { Messages } from './index'
+
+export const en: Messages = {
+  'app.name': 'UWR Roster',
+  'app.loading': 'Loading…',
+  'app.error': 'Something went wrong: {message}',
+
+  'lang.label': 'Language',
+  'lang.fi': 'Suomi',
+  'lang.en': 'English',
+
+  'nav.home': 'Home',
+  'nav.players': 'Players',
+  'nav.tournaments': 'Tournaments',
+  'nav.coaches': 'Coaches',
+  'nav.signOut': 'Sign out',
+
+  'login.title': 'Sign in',
+  'login.intro': "Enter your email and we'll send you a sign-in link.",
+  'login.email': 'Email',
+  'login.send': 'Send link',
+  'login.sending': 'Sending…',
+  'login.sent': 'We sent a sign-in link to {email}. Open it on this device.',
+  'login.useOther': 'Use a different email',
+  'login.confirmTitle': 'Confirm your email',
+  'login.confirmIntro': 'You opened the link in a different browser or device. Enter the same email again.',
+  'login.confirm': 'Sign in',
+  'login.finishing': 'Signing in…',
+
+  'notInvited.title': 'No access',
+  'notInvited.body': "{email} hasn't been invited to this app. Ask a coach to send you an invite.",
+
+  'home.welcome': 'Welcome, {email}',
+  'home.intro': 'Manage players, tournaments and game lineups here.',
+  'home.comingSoon': 'Coming soon',
+  'home.playersDesc': 'Players, numbers and positions.',
+  'home.tournamentsDesc': 'Tournaments, games and lineups.',
+  'home.coachesDesc': 'Invite coaches and manage access.',
+
+  'coaches.title': 'Coaches',
+  'coaches.inviteTitle': 'Invite a coach',
+  'coaches.inviteIntro': 'The invited coach gets a sign-in link by email.',
+  'coaches.email': 'Email',
+  'coaches.role': 'Role',
+  'coaches.role.admin': 'Admin',
+  'coaches.role.coach': 'Coach',
+  'coaches.invite': 'Invite',
+  'coaches.invited': 'Invite sent: {email}',
+  'coaches.alreadyInvited': '{email} is already invited.',
+  'coaches.remove': 'Remove',
+  'coaches.removeConfirm': 'Remove {email} from coaches?',
+  'coaches.resend': 'Resend link',
+  'coaches.you': '(you)',
+  'coaches.adminOnly': 'Only admins can invite coaches.',
+}
