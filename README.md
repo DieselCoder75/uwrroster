@@ -61,6 +61,19 @@ npm run lint
 
 ## Deploy
 
+Merging a pull request to `main` publishes the app automatically
+(`.github/workflows/firebase-hosting-merge.yml`). Every pull request also runs
+lint, unit tests and the build.
+
+One-time setup: run `npx firebase init hosting:github` in the project folder,
+logged in with the Google account that owns `uwrroster`. It creates a deploy
+service account and stores it as the GitHub secret
+`FIREBASE_SERVICE_ACCOUNT_UWRROSTER`. Answer **No** when it asks to overwrite
+the existing workflow files.
+
+The workflow deploys Hosting only. When `firestore.rules` changes, deploy the
+rules by hand:
+
 ```sh
 npx firebase login           # with the Google account that owns the uwrroster project
 npm run deploy               # builds and deploys Hosting + Firestore rules
