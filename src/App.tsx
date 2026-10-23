@@ -6,6 +6,7 @@ import { CoachesPage } from './pages/CoachesPage'
 import { ComingSoonPage, HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { NotInvitedPage } from './pages/NotInvitedPage'
+import { PlayersPage } from './players/PlayersPage'
 
 function AppRoutes() {
   const { t } = useI18n()
@@ -33,7 +34,7 @@ function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route element={<Layout />}>
         <Route index element={<HomePage />} />
-        <Route path="players" element={<ComingSoonPage title={t('nav.players')} />} />
+        <Route path="players" element={<PlayersPage />} />
         <Route path="tournaments" element={<ComingSoonPage title={t('nav.tournaments')} />} />
         <Route path="coaches" element={<CoachesPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />

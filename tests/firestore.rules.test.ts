@@ -70,9 +70,36 @@ describe('coaches', () => {
   })
 })
 
+const PLAYER = {
+  number: 6,
+  firstName: 'Heli',
+  lastName: 'Koskinen',
+  mainPosition: 'DEF',
+  otherPositions: ['ATT'],
+  locked: false,
+  captain: 'captain',
+  active: true,
+}
+
+describe('players', () => {
+  it('accepts a valid player, with or without a number', async () => {
+    await assertSucceeds(setDoc(doc(as(COACH), 'players', 'p1'), PLAYER))
+    await assertSucceeds(setDoc(doc(as(COACH), 'players', 'p2'), { ...PLAYER, number: null, captain: null }))
+  })
+
+  it('rejects invalid players', async () => {
+    const db = as(COACH)
+    await assertFails(setDoc(doc(db, 'players', 'x'), { ...PLAYER, firstName: '' }))
+    await assertFails(setDoc(doc(db, 'players', 'x'), { ...PLAYER, number: -1 }))
+    await assertFails(setDoc(doc(db, 'players', 'x'), { ...PLAYER, mainPosition: 'STRIKER' }))
+    await assertFails(setDoc(doc(db, 'players', 'x'), { ...PLAYER, otherPositions: ['GK', 'WING'] }))
+    await assertFails(setDoc(doc(db, 'players', 'x'), { ...PLAYER, captain: 'boss' }))
+  })
+})
+
 describe('team data', () => {
   it('is only for coaches', async () => {
-    await assertSucceeds(setDoc(doc(as(COACH), 'players', 'p1'), { first: 'Ida' }))
+    await assertSucceeds(setDoc(doc(as(COACH), 'players', 'p1'), PLAYER))
     await assertSucceeds(setDoc(doc(as(COACH), 'tournaments', 't1', 'games', 'g1'), { name: 'Game 1' }))
     await assertFails(getDoc(doc(as(STRANGER), 'players', 'p1')))
     await assertFails(setDoc(doc(as(STRANGER), 'tournaments', 't1'), { name: 'x' }))

@@ -46,8 +46,23 @@ service cloud.firestore {
       allow delete: if isAdmin() && email != myEmail();
     }
 
+    function validPlayer() {
+      let d = request.resource.data;
+      let positions = ['GK', 'DEF', 'ATT'];
+      return d.firstName is string && d.firstName.size() > 0 && d.firstName.size() <= 60
+        && d.lastName is string && d.lastName.size() <= 60
+        && (d.number == null || (d.number is int && d.number >= 0 && d.number <= 999))
+        && d.mainPosition in positions
+        && d.otherPositions is list && d.otherPositions.size() <= 2
+        && d.otherPositions.hasOnly(positions)
+        && d.locked is bool
+        && d.active is bool
+        && d.captain in [null, 'captain', 'viceCaptain'];
+    }
+
     match /players/{playerId} {
-      allow read, write: if isCoach();
+      allow read, delete: if isCoach();
+      allow create, update: if isCoach() && validPlayer();
     }
 
     match /tournaments/{tournamentId}/{rest=**} {
