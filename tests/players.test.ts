@@ -65,16 +65,8 @@ describe('player model', () => {
     expect(matchesSearch(p, 'uusi')).toBe(true)
   })
 
-  it('flags numbers shared by active players only', () => {
-    const dupes = duplicateNumbers([
-      player({ number: 7 }),
-      player({ number: 7 }),
-      player({ number: 8 }),
-      player({ number: 8, active: false }),
-      player({ number: null }),
-      player({ number: null }),
-    ])
-    expect([...dupes]).toEqual([7])
+  it('finds repeated numbers, ignoring missing ones', () => {
+    expect([...duplicateNumbers([7, 7, 8, null, null])]).toEqual([7])
   })
 })
 

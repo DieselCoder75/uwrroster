@@ -28,13 +28,3 @@ export function HomePage() {
     </div>
   )
 }
-
-export function ComingSoonPage({ title }: { title: string }) {
-  const { t } = useI18n()
-  return (
-    <div className="stack">
-      <h1>{title}</h1>
-      <p className="muted">{t('home.comingSoon')}</p>
-    </div>
-  )
-}

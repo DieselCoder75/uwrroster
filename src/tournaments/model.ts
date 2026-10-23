@@ -1,0 +1,110 @@
+import { duplicateNumbers, playablePositions, type Player, type Position } from '../players/model'
+
+/** Default squad: 12 in the game (4 per position) and 3 substitutes. Special tournaments allow more. */
+export const DEFAULT_SQUAD_SIZE = 15
+export const PER_POSITION = 4
+
+export type Slot = Position | 'SUB'
+export const SLOTS: Slot[] = ['GK', 'DEF', 'ATT', 'SUB']
+
+export type Lineup = Record<Slot, string[]>
+export const emptyLineup = (): Lineup => ({ GK: [], DEF: [], ATT: [], SUB: [] })
+
+export type Cap = 'blue' | 'white'
+
+export type Tournament = {
+  id: string
+  name: string
+  location: string
+  startDate: string // YYYY-MM-DD
+  endDate: string
+  squadSize: number
+  /** Player ids available for this tournament. */
+  squad: string[]
+  /** Shirt numbers used in this tournament when they differ from the player's usual number. */
+  numbers: Record<string, number>
+}
+
+export type TournamentInput = Omit<Tournament, 'id'>
+
+export type Game = {
+  id: string
+  opponent: string
+  date: string // YYYY-MM-DD
+  time: string // HH:MM
+  cap: Cap | null
+  /** Free text such as "Match 6" or "Semi-final". */
+  label: string
+  lineup: Lineup
+}
+
+export type GameInput = Omit<Game, 'id'>
+
+export function tournamentNumber(tour: Pick<Tournament, 'numbers'>, player: Pick<Player, 'id' | 'number'>): number | null {
+  return tour.numbers[player.id] ?? player.number
+}
+
+/** Numbers worn by more than one squad player in this tournament. */
+export function squadNumberClashes(tour: Pick<Tournament, 'numbers' | 'squad'>, players: Player[]): Set<number> {
+  const inSquad = players.filter((p) => tour.squad.includes(p.id))
+  return duplicateNumbers(inSquad.map((p) => tournamentNumber(tour, p)))
+}
+
+/** Where a player sits in the lineup, or null when not picked. */
+export function slotOf(lineup: Lineup, playerId: string): Slot | null {
+  return SLOTS.find((s) => lineup[s].includes(playerId)) ?? null
+}
+
+/** Moves a player to a slot (or out of the lineup with null), keeping every other player's order. */
+export function movePlayer(lineup: Lineup, playerId: string, to: Slot | null, index?: number): Lineup {
+  const next = emptyLineup()
+  for (const s of SLOTS) next[s] = lineup[s].filter((id) => id !== playerId)
+  if (to) {
+    const list = next[to]
+    const at = index === undefined ? list.length : Math.max(0, Math.min(index, list.length))
+    list.splice(at, 0, playerId)
+  }
+  return next
+}
+
+/** Drops players that are no longer in the squad (e.g. removed after the lineup was made). */
+export function pruneLineup(lineup: Lineup, squad: string[]): Lineup {
+  const keep = new Set(squad)
+  const next = emptyLineup()
+  for (const s of SLOTS) next[s] = lineup[s].filter((id) => keep.has(id))
+  return next
+}
+
+export type FitIssue = 'locked' | 'notPlayable' | null
+
+/** Whether a player fits a slot. Substitutes fit anyone. */
+export function fitIssue(player: Player, slot: Slot): FitIssue {
+  if (slot === 'SUB') return null
+  if (playablePositions(player).includes(slot)) return null
+  return player.locked ? 'locked' : 'notPlayable'
+}
+
+export function slotLimit(slot: Slot, squadSize: number): number {
+  return slot === 'SUB' ? Math.max(0, squadSize - PER_POSITION * 3) : PER_POSITION
+}
+
+export type LineupSummary = { inGame: number; subs: number; complete: boolean }
+
+export function summarize(lineup: Lineup, squadSize: number): LineupSummary {
+  const inGame = lineup.GK.length + lineup.DEF.length + lineup.ATT.length
+  const complete =
+    lineup.GK.length === PER_POSITION &&
+    lineup.DEF.length === PER_POSITION &&
+    lineup.ATT.length === PER_POSITION &&
+    lineup.SUB.length <= slotLimit('SUB', squadSize)
+  return { inGame, subs: lineup.SUB.length, complete }
+}
+
+export function sortGames(games: Game[]): Game[] {
+  return [...games].sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`))
+}
+
+export function sortTournaments(list: Tournament[]): Tournament[] {
+  // Newest first; undated ones at the end.
+  return [...list].sort((a, b) => (b.startDate || '0').localeCompare(a.startDate || '0') || a.name.localeCompare(b.name))
+}
