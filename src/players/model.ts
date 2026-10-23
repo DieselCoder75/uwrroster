@@ -61,14 +61,14 @@ export function matchesSearch(p: Player, query: string): boolean {
   return String(p.number) === q || fullName(p).toLowerCase().includes(q)
 }
 
-/** Numbers used by more than one active player. */
-export function duplicateNumbers(players: Player[]): Set<number> {
+/** Numbers that appear more than once (nulls ignored). */
+export function duplicateNumbers(numbers: (number | null)[]): Set<number> {
   const seen = new Set<number>()
   const dupes = new Set<number>()
-  for (const p of players) {
-    if (!p.active || p.number === null) continue
-    if (seen.has(p.number)) dupes.add(p.number)
-    seen.add(p.number)
+  for (const n of numbers) {
+    if (n === null) continue
+    if (seen.has(n)) dupes.add(n)
+    seen.add(n)
   }
   return dupes
 }

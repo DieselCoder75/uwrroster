@@ -3,10 +3,13 @@ import { AuthProvider, useAuth } from './auth/AuthProvider'
 import { Layout } from './components/Layout'
 import { I18nProvider, useI18n } from './i18n'
 import { CoachesPage } from './pages/CoachesPage'
-import { ComingSoonPage, HomePage } from './pages/HomePage'
+import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { NotInvitedPage } from './pages/NotInvitedPage'
 import { PlayersPage } from './players/PlayersPage'
+import { LineupPage } from './tournaments/LineupPage'
+import { TournamentPage } from './tournaments/TournamentPage'
+import { TournamentsPage } from './tournaments/TournamentsPage'
 
 function AppRoutes() {
   const { t } = useI18n()
@@ -35,7 +38,9 @@ function AppRoutes() {
       <Route element={<Layout />}>
         <Route index element={<HomePage />} />
         <Route path="players" element={<PlayersPage />} />
-        <Route path="tournaments" element={<ComingSoonPage title={t('nav.tournaments')} />} />
+        <Route path="tournaments" element={<TournamentsPage />} />
+        <Route path="tournaments/:tid" element={<TournamentPage />} />
+        <Route path="tournaments/:tid/games/:gid" element={<LineupPage />} />
         <Route path="coaches" element={<CoachesPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

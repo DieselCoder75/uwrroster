@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useI18n } from '../i18n'
-import { POSITIONS, duplicateNumbers, fullName, matchesSearch, type Player, type Position } from './model'
+import { POSITIONS, fullName, matchesSearch, type Player, type Position } from './model'
 import { PlayerEditor } from './PlayerEditor'
 import { importRoster, missingFromPool, usePlayers } from './store'
 import { WEBSITE_ROSTER } from './websiteRoster'
@@ -25,7 +25,6 @@ export function PlayersPage() {
 
   const players = state.players
   const active = players.filter((p) => p.active)
-  const dupes = duplicateNumbers(players)
   const missing = missingFromPool(WEBSITE_ROSTER, players)
 
   const shown = players.filter((p) => {
@@ -111,7 +110,7 @@ export function PlayersPage() {
             <ul className="player-grid">
               {shown.map((p) => (
                 <li key={p.id}>
-                  <PlayerCard player={p} duplicate={p.number !== null && dupes.has(p.number)} onClick={() => setEditing(p)} />
+                  <PlayerCard player={p} onClick={() => setEditing(p)} />
                 </li>
               ))}
             </ul>
@@ -126,14 +125,11 @@ export function PlayersPage() {
   )
 }
 
-function PlayerCard({ player: p, duplicate, onClick }: { player: Player; duplicate: boolean; onClick: () => void }) {
+function PlayerCard({ player: p, onClick }: { player: Player; onClick: () => void }) {
   const { t } = useI18n()
   return (
     <button className={`player-card card ${p.active ? '' : 'inactive'}`} onClick={onClick}>
-      <span className={`player-num pos-${p.mainPosition}`} title={duplicate ? t('players.duplicateNumber') : undefined}>
-        {p.number ?? '–'}
-        {duplicate && <span className="dup">!</span>}
-      </span>
+      <span className={`player-num pos-${p.mainPosition}`}>{p.number ?? '–'}</span>
       <span className="player-main">
         <span className="player-name">
           {fullName(p)}
