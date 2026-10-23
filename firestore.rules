@@ -1,0 +1,57 @@
+rules_version = '2';
+
+// Access model: only invited coaches can use the app.
+// An invite is a document in /coaches keyed by the coach's lowercase email.
+// Sign-in uses email links, so a signed-in email is always verified.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email_verified == true;
+    }
+
+    function myEmail() {
+      return request.auth.token.email.lower();
+    }
+
+    function myCoachPath() {
+      return /databases/$(database)/documents/coaches/$(myEmail());
+    }
+
+    function isCoach() {
+      return signedIn() && exists(myCoachPath());
+    }
+
+    function isAdmin() {
+      return isCoach() && get(myCoachPath()).data.role == 'admin';
+    }
+
+    function validCoach(email) {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['email', 'role', 'invitedBy', 'invitedAt'])
+        && d.email == email
+        && d.role in ['admin', 'coach'];
+    }
+
+    match /coaches/{email} {
+      // Anyone signed in may check their own invite; coaches see the whole list.
+      allow get: if signedIn() && email == myEmail();
+      allow read: if isCoach();
+      allow create: if isAdmin() && validCoach(email);
+      // Admins can't demote or remove themselves, so there is always at least one admin.
+      allow update: if isAdmin() && validCoach(email)
+        && (email != myEmail() || request.resource.data.role == 'admin');
+      allow delete: if isAdmin() && email != myEmail();
+    }
+
+    match /players/{playerId} {
+      allow read, write: if isCoach();
+    }
+
+    match /tournaments/{tournamentId}/{rest=**} {
+      allow read, write: if isCoach();
+    }
+  }
+}
