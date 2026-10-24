@@ -1,35 +1,59 @@
-:root {
-  --bg: #f3f7fa;
-  --surface: #ffffff;
-  --text: #10212e;
-  --muted: #5b6b78;
-  --border: #d7e1e8;
-  --primary: #0a6ebd;
-  --primary-text: #ffffff;
-  --danger: #c0392b;
-  --notice-bg: #e6f3ea;
-  --radius: 12px;
-  --tabbar-h: 60px;
+/* Archivo and Archivo Black, the same fonts as uppopallonaiset.pages.dev. */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url(/fonts/archivo-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url(/fonts/archivo-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Archivo Black';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/archivo-black-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Archivo Black';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/archivo-black-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+/* Colours follow the team website: deep-sea navy with a cyan accent. The app is dark-only like the site. */
+:root {
+  --bg: #04090f;
+  --surface: #081527;
+  --text: #eaf4fb;
+  --muted: #9dbbd0;
+  --border: #10263b;
+  --primary: #29e0ff;
+  --primary-text: #04121f;
+  --danger: #ff7a6e;
+  --notice-bg: #072d5c;
+  --radius: 4px;
+  --tabbar-h: 60px;
+  --font-display: 'Archivo Black', 'Archivo', system-ui, sans-serif;
+
+  color-scheme: dark;
+  font-family: 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0d1820;
-    --surface: #152430;
-    --text: #e6eef3;
-    --muted: #93a5b3;
-    --border: #253744;
-    --primary: #3a9be6;
-    --notice-bg: #17352a;
-    --danger: #e0685b;
-  }
 }
 
 * {
@@ -49,7 +73,11 @@ h2 {
 }
 
 h1 {
-  font-size: 1.5rem;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.6rem;
+  text-transform: uppercase;
+  letter-spacing: -0.005em;
 }
 
 h2 {
@@ -94,10 +122,42 @@ a {
 }
 
 .brand {
-  font-weight: 800;
-  font-size: 1.15rem;
-  color: var(--primary);
-  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+@media (max-width: 420px) {
+  .brand {
+    gap: 8px;
+    font-size: 0.9rem;
+    letter-spacing: 0.03em;
+  }
+
+  .brand::before {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.brand,
+.topbar-actions .btn {
+  white-space: nowrap;
+}
+
+/* The slanted mark from the team website logo. */
+.brand::before {
+  content: '';
+  flex: none;
+  width: 26px;
+  height: 26px;
+  background: linear-gradient(135deg, #29e0ff, #0b4fa0);
+  clip-path: polygon(0 0, 100% 0, 78% 100%, 0 100%);
 }
 
 .content {
@@ -227,7 +287,8 @@ a {
 
 .notice {
   background: var(--notice-bg);
-  border-radius: 8px;
+  border-left: 3px solid var(--primary);
+  border-radius: var(--radius);
   padding: 10px 12px;
 }
 
@@ -249,7 +310,7 @@ select {
   color: var(--text);
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
 }
 
 input:focus,
@@ -266,8 +327,15 @@ select:focus {
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--primary);
 }
 
 .btn:disabled {
@@ -276,9 +344,19 @@ select:focus {
 }
 
 .btn-primary {
+  font-weight: 700;
   color: var(--primary-text);
   background: var(--primary);
   border-color: var(--primary);
+  border-radius: 0;
+  /* Slanted ends like the buttons on the team website. */
+  clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+  padding-inline: 22px;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #7fedff;
+  border-color: #7fedff;
 }
 
 .btn-danger {
@@ -294,7 +372,7 @@ select:focus {
 .lang-switch {
   display: inline-flex;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   overflow: hidden;
 }
 
@@ -373,23 +451,12 @@ select:focus {
 /* Positions */
 
 :root {
-  --gk: #c98a00;
-  --gk-bg: #fff4d6;
-  --def: #1f6fd1;
-  --def-bg: #e1edff;
-  --att: #d1453b;
-  --att-bg: #ffe5e2;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --gk: #f2c14e;
-    --gk-bg: #3a2f12;
-    --def: #6aa8ff;
-    --def-bg: #142a4a;
-    --att: #ff8a7f;
-    --att-bg: #4a1d1a;
-  }
+  --gk: #f2c14e;
+  --gk-bg: #2e2510;
+  --def: #6aa8ff;
+  --def-bg: #0f2445;
+  --att: #ff8a7f;
+  --att-bg: #3d1a1a;
 }
 
 .pos-GK {
@@ -526,7 +593,7 @@ select:focus {
   padding: 1px 6px;
   color: var(--primary-text);
   background: var(--primary);
-  border-radius: 6px;
+  border-radius: var(--radius);
 }
 
 .player-pos {
@@ -562,7 +629,7 @@ select:focus {
   color: var(--text);
   background: var(--surface);
   border: none;
-  border-radius: 16px 16px 0 0;
+  border-radius: 6px 6px 0 0;
   overflow-y: auto;
 }
 
@@ -573,7 +640,7 @@ select:focus {
 @media (min-width: 600px) {
   .sheet {
     margin: auto;
-    border-radius: 16px;
+    border-radius: 6px;
   }
 }
 
@@ -624,7 +691,7 @@ fieldset.field legend {
 .segmented {
   display: flex;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   overflow: hidden;
 }
 
@@ -1060,7 +1127,7 @@ ul.tiles {
   font-size: 0.85rem;
   color: var(--primary);
   border: 2px dashed color-mix(in srgb, var(--primary) 50%, transparent);
-  border-radius: 10px;
+  border-radius: var(--radius);
 }
 
 .chip-player {
@@ -1090,7 +1157,7 @@ ul.tiles {
   padding: 6px 10px 6px 8px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
 }
 
 .chip-player.selected .chip-body {
