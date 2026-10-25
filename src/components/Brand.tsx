@@ -3,8 +3,7 @@ export function Brand() {
   return (
     <span className="brand">
       <span className="brand-mark" aria-hidden="true" />
-      <span className="brand-name">UWR</span>
-      <span className="brand-tag">Roster</span>
+      <span className="brand-tag brand-app">UWR Roster</span>
     </span>
   )
 }

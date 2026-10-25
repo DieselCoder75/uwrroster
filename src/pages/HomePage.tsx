@@ -25,11 +25,6 @@ export function HomePage() {
       <PageHero
         image="20250927-172557"
         tag={t('home.tag')}
-        title={
-          <>
-            UWR <span className="accent">Roster</span>
-          </>
-        }
         sub={t('home.intro')}
       />
 

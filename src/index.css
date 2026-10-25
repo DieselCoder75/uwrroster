@@ -155,13 +155,6 @@ a {
   height: 22px;
 }
 
-.brand-name {
-  font-family: var(--font-display);
-  font-size: 16px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
 .brand-tag {
   font-size: 10px;
   font-weight: 700;
@@ -173,6 +166,11 @@ a {
   clip-path: polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%);
 }
 
+.brand-tag.brand-app {
+  font-size: 12px;
+  padding: 4px 14px;
+}
+
 @media (max-width: 400px) {
   .brand {
     gap: 9px;
@@ -181,11 +179,6 @@ a {
   .brand > .brand-mark {
     width: 26px;
     height: 26px;
-  }
-
-  .brand-name {
-    font-size: 13px;
-    letter-spacing: 0.03em;
   }
 
   .brand-tag {

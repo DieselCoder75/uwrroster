@@ -13,11 +13,13 @@ import {
   slotLimit,
   slotOf,
   sortGames,
+  sortTournaments,
   squadNumberClashes,
   summarize,
   tournamentNumber,
   type Game,
   type Lineup,
+  type Tournament,
 } from '../src/tournaments/model'
 
 const player = (id: string, over: Partial<Player> = {}): Player => ({
@@ -162,6 +164,24 @@ describe('tournament numbers', () => {
     expect(tournamentNumber(tour, players[0])).toBe(30)
     expect(tournamentNumber(tour, players[1])).toBe(3)
     expect(squadNumberClashes(tour, players).size).toBe(0)
+  })
+})
+
+describe('tournament order', () => {
+  it('lists coming tournaments soonest first, then past ones, then undated', () => {
+    const tour = (name: string, startDate: string, endDate = startDate) => ({ name, startDate, endDate }) as Tournament
+    const sorted = sortTournaments(
+      [
+        tour('old', '2026-03-01'),
+        tour('mm', '2027-05-05', '2027-05-22'),
+        tour('none', ''),
+        tour('camp', '2027-01-23', '2027-01-24'),
+        tour('older', '2025-06-01'),
+        tour('ongoing', '2026-10-24', '2026-10-26'),
+      ],
+      '2026-10-25',
+    )
+    expect(sorted.map((x) => x.name)).toEqual(['ongoing', 'camp', 'mm', 'old', 'older', 'none'])
   })
 })
 

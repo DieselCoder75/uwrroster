@@ -149,9 +149,19 @@ export function sortGames(games: Game[]): Game[] {
   return [...games].sort((a, b) => key(a).localeCompare(key(b)) || a.createdAt - b.createdAt)
 }
 
-export function sortTournaments(list: Tournament[]): Tournament[] {
-  // Newest first; undated ones at the end.
-  return [...list].sort((a, b) => (b.startDate || '0').localeCompare(a.startDate || '0') || a.name.localeCompare(b.name))
+/**
+ * Coming and ongoing tournaments first, soonest first; then past ones, most recent first; undated ones at the end.
+ * `today` is YYYY-MM-DD.
+ */
+export function sortTournaments(list: Tournament[], today: string): Tournament[] {
+  const group = (x: Tournament) => (!x.startDate ? 2 : (x.endDate || x.startDate) >= today ? 0 : 1)
+  return [...list].sort((a, b) => {
+    const ga = group(a)
+    const gb = group(b)
+    if (ga !== gb) return ga - gb
+    const byDate = ga === 0 ? a.startDate.localeCompare(b.startDate) : b.startDate.localeCompare(a.startDate)
+    return byDate || a.name.localeCompare(b.name)
+  })
 }
 
 /** Where a player is in each period of one game: a position, the bench ('SUB'), or null when not among the game's 15. */

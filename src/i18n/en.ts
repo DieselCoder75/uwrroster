@@ -17,7 +17,7 @@ export const en: Messages = {
   'nav.menu': 'Open menu',
   'footer.site': 'Uppopallonaiset.fi',
   'hero.tag': "Finland women's underwater rugby team",
-  'home.tag': 'For coaches',
+  'home.tag': "Women's national underwater rugby team",
   'home.upcoming': 'Upcoming tournaments',
   'home.allTournaments': 'All tournaments',
   'home.noUpcoming': 'No upcoming tournaments.',
@@ -242,4 +242,5 @@ export const en: Messages = {
   'load.low': 'Plays clearly less than average',
   'load.chip': '{count} per.',
   'load.chipTitle': "Periods played in the tournament's other games: {count}",
+  'tournaments.daysTo': '{count} days until the tournament',
 }

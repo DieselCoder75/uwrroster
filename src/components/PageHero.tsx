@@ -6,7 +6,7 @@ type Props = {
   /** Where the photo is cropped, as CSS object-position. */
   focus?: string
   tag: ReactNode
-  title: ReactNode
+  title?: ReactNode
   sub?: ReactNode
   /** Big outlined number on the right, like the player count on the website. */
   count?: number | string
@@ -27,7 +27,7 @@ export function PageHero({ image, focus, tag, title, sub, count, countLabel, top
         <div className="hero-text">
           {top}
           <div className="tag">{tag}</div>
-          <h1 className="hero-title">{title}</h1>
+          {title && <h1 className="hero-title">{title}</h1>}
           {sub && <p className="hero-sub">{sub}</p>}
         </div>
         {(count !== undefined || actions) && (
