@@ -111,6 +111,10 @@ export function SquadPage() {
         clash={clash}
         selected={selected === p.id}
         onTap={() => setSelected((s) => (s === p.id ? null : p.id))}
+        onDoubleTap={() => {
+          setSelected(null)
+          place(p.id, inSquad.has(p.id) ? POOL : SQUAD)
+        }}
       />
     )
   }
@@ -155,12 +159,6 @@ export function SquadPage() {
         </strong>
         <SaveStatus pending={pending} />
         <span className="grow" />
-        {selectedPlayer && (
-          // Long lists on phones: move the tapped player without scrolling to the other area.
-          <button className="btn btn-small btn-primary" onClick={() => onZoneTap(selectedInSquad ? POOL : SQUAD)}>
-            {selectedInSquad ? t('squad.toPool') : t('squad.toSquad')}
-          </button>
-        )}
         <button className="btn btn-small" onClick={() => setEditingNumbers(true)} disabled={squad.length === 0}>
           {t('squad.numbers')}
         </button>
@@ -173,14 +171,20 @@ export function SquadPage() {
         </p>
       ))}
 
-      <p className={selectedPlayer ? 'notice select-hint' : 'muted small'}>
-        {selectedPlayer ? t('lineup.selected', { name: fullName(selectedPlayer) }) : t('squad.hint')}
-        {selectedPlayer && (
+      <p className="muted small">{t('squad.hint')}</p>
+      {/* Floats over the page so selecting doesn't move the chips under a second tap. */}
+      {selectedPlayer && (
+        <div className="notice select-hint" role="status">
+          <span>{t('lineup.selected', { name: fullName(selectedPlayer) })}</span>
+          {/* Long lists on phones: move the tapped player without scrolling to the other area. */}
+          <button className="btn btn-small btn-primary" onClick={() => onZoneTap(selectedInSquad ? POOL : SQUAD)}>
+            {selectedInSquad ? t('squad.toPool') : t('squad.toSquad')}
+          </button>
           <button className="btn btn-small" onClick={() => setSelected(null)}>
             {t('lineup.cancelSelect')}
           </button>
-        )}
-      </p>
+        </div>
+      )}
 
       <DndContext sensors={sensors} collisionDetection={collision} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setDragging(null)}>
         <div className="squad-layout">

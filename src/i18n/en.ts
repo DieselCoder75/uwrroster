@@ -158,7 +158,7 @@ export const en: Messages = {
   'squad.dialogTitle': 'Tournament squad',
   'squad.selected': '{count} selected',
   'squad.pageHelp': 'Drag the players going to this tournament from the player pool into the squad. Game lineups are picked from this squad.',
-  'squad.hint': 'Drag a player into the squad or back to the pool, or tap a player and then an area.',
+  'squad.hint': 'Drag a player into the squad or back to the pool, or tap a player and then an area. Double-tap moves a player straight across.',
   'squad.pool': 'Player pool',
   'squad.toSquad': '→ Squad',
   'squad.toPool': '→ Pool',
@@ -197,7 +197,7 @@ export const en: Messages = {
   'lineup.available': 'Not in lineup',
   'lineup.allPlaced': 'Every squad player is placed.',
   'lineup.noSquad': 'Pick the tournament squad first.',
-  'lineup.hint': 'Drag a player into place, or tap a player and then a position.',
+  'lineup.hint': 'Drag a player into place, or tap a player and then a position. Double-tap sends a player to their main position, or out of the lineup.',
   'lineup.selected': 'Selected: {name}. Tap a position.',
   'lineup.cancelSelect': 'Cancel',
   'lineup.remove': 'Remove from lineup',
@@ -243,4 +243,5 @@ export const en: Messages = {
   'load.chip': '{count} per.',
   'load.chipTitle': "Periods played in the tournament's other games: {count}",
   'tournaments.daysTo': '{count} days until the tournament',
+  'lineup.positionFull': 'No room left in {pos}. Move someone out first.',
 }

@@ -129,6 +129,19 @@ export function LineupPage() {
     setSelected((s) => (s === playerId ? null : playerId))
   }
 
+  // Double tap: a player not in the lineup goes to their main position, a placed player comes out.
+  function onChipDoubleTap(playerId: string) {
+    setSelected(null)
+    if (slotOf(lineup, playerId) !== null) return place(playerId, POOL)
+    const p = byId.get(playerId)
+    if (!p) return
+    if (lineup[p.mainPosition].length >= slotLimit(p.mainPosition)) {
+      setError(t('lineup.positionFull', { pos: t(`slot.${p.mainPosition}`) }))
+      return
+    }
+    place(playerId, p.mainPosition)
+  }
+
   function onZoneTap(zone: Zone) {
     if (!selected) return
     place(selected, zone)
@@ -265,14 +278,16 @@ export function LineupPage() {
         </p>
       ) : (
         <>
-          <p className={selectedPlayer ? 'notice select-hint' : 'muted small'}>
-            {selectedPlayer ? t('lineup.selected', { name: fullName(selectedPlayer) }) : t('lineup.hint')}
-            {selectedPlayer && (
+          <p className="muted small">{t('lineup.hint')}</p>
+          {/* Floats over the page so selecting doesn't move the chips under a second tap. */}
+          {selectedPlayer && (
+            <div className="notice select-hint" role="status">
+              <span>{t('lineup.selected', { name: fullName(selectedPlayer) })}</span>
               <button className="btn btn-small" onClick={() => setSelected(null)}>
                 {t('lineup.cancelSelect')}
               </button>
-            )}
-          </p>
+            </div>
+          )}
 
           <DndContext sensors={sensors} collisionDetection={collision} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setDragging(null)}>
             <div className="lineup-layout">
@@ -299,6 +314,7 @@ export function LineupPage() {
                           note={noteFor(id)}
                           load={loadOf(id)}
                           onTap={() => onChipTap(id)}
+                          onDoubleTap={() => onChipDoubleTap(id)}
                         />
                       ) : null
                     })}
@@ -325,6 +341,7 @@ export function LineupPage() {
                       note={noteFor(id)}
                       load={loadOf(id)}
                       onTap={() => onChipTap(id)}
+                      onDoubleTap={() => onChipDoubleTap(id)}
                     />
                   ) : null
                 })}
