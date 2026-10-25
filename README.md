@@ -9,13 +9,21 @@ Built with React + TypeScript (Vite) on Firebase (Hosting, Authentication, Fires
 
 ## Access
 
-Only invited coaches can use the app.
+Only invited users can use the app.
 
-- Coaches sign in with an **email link** (no passwords).
+- Users sign in with an **email link** or a **Google account** (no passwords).
 - An invite is a document in the `coaches` collection, keyed by the lowercase
-  email, with `role` set to `admin` or `coach`.
-- Admins invite and remove coaches on the **Coaches** page. The invite email is
-  the sign-in link itself.
+  email, with `role` set to `admin` or `coach` (a plain user).
+- **Teams** (`teams/{teamId}`) each have their own players, tournaments, camps
+  and page photos (`teams/{teamId}/players|tournaments|images`). A team lists
+  its `members` (can view) and `coaches` (can also change things).
+- Admins manage users, teams, team members and page photos in the **Admin**
+  panel (`/admin`), and can open and change every team.
+- Page photos are compressed in the browser and stored in Firestore as bytes,
+  because Cloud Storage needs the paid Blaze plan.
+- The data from before teams (top-level `players` and `tournaments`) is copied
+  into the `default` team the first time an admin opens the app; the old copy
+  is left read-only.
 - Firestore security rules (`firestore.rules`) enforce this on the server.
 
 ## One-time Firebase setup

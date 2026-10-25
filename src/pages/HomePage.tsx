@@ -4,12 +4,14 @@ import { PageHero } from '../components/PageHero'
 import { useI18n } from '../i18n'
 import { daysUntil, formatRange, todayIso } from '../lib/dates'
 import { useTournaments } from '../tournaments/store'
+import { useTeam } from '../teams/TeamProvider'
 
 export function HomePage() {
   const { t, lang } = useI18n()
+  const { teamId, team } = useTeam()
   const auth = useAuth()
   const email = auth.status === 'coach' ? auth.email : ''
-  const tournaments = useTournaments()
+  const tournaments = useTournaments(teamId)
 
   const today = todayIso()
   // Tournaments that haven't ended yet, soonest first.
@@ -23,8 +25,8 @@ export function HomePage() {
   return (
     <div className="stack">
       <PageHero
-        image="em-pronssimitalistit"
-        tag={t('home.tag')}
+        page="home"
+        tag={team.name || t('home.tag')}
         sub={t('home.intro')}
       />
 

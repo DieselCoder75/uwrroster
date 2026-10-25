@@ -103,13 +103,13 @@ export function editorName(editor: Editor | null): string {
   return editor.name.trim() || editor.email.split('@')[0]
 }
 
-/** Our team's name in game titles. */
+/** Our team's name in game titles when the team hasn't set its own. */
 export const OUR_TEAM = 'Finland'
 
 /** The two teams by cap colour, or null while our cap colour is not known. */
-export function gameTeams(game: Pick<Game, 'opponent' | 'cap'>): { blue: string; white: string } | null {
-  if (game.cap === 'blue') return { blue: OUR_TEAM, white: game.opponent }
-  if (game.cap === 'white') return { blue: game.opponent, white: OUR_TEAM }
+export function gameTeams(game: Pick<Game, 'opponent' | 'cap'>, ours = OUR_TEAM): { blue: string; white: string } | null {
+  if (game.cap === 'blue') return { blue: ours, white: game.opponent }
+  if (game.cap === 'white') return { blue: game.opponent, white: ours }
   return null
 }
 
@@ -117,8 +117,8 @@ export function gameTeams(game: Pick<Game, 'opponent' | 'cap'>): { blue: string;
  * The game's name as it is announced: the team in blue caps first, white second, e.g. "Finland vs Germany"
  * or "Denmark vs Finland". Without a cap colour it is just "vs Denmark".
  */
-export function gameTitle(game: Pick<Game, 'opponent' | 'cap'>): string {
-  const teams = gameTeams(game)
+export function gameTitle(game: Pick<Game, 'opponent' | 'cap'>, ours = OUR_TEAM): string {
+  const teams = gameTeams(game, ours)
   return teams ? `${teams.blue} vs ${teams.white}` : `vs ${game.opponent}`
 }
 

@@ -5,6 +5,7 @@ import { useI18n } from '../i18n'
 import { editorOf, type Cap, type Game } from './model'
 import { whenSaved } from '../lib/online'
 import { deleteGame, saveGame } from './store'
+import { useTeam } from '../teams/TeamProvider'
 
 type Props = {
   tournamentId: string
@@ -16,6 +17,7 @@ type Props = {
 
 export function GameEditor({ tournamentId, game, defaultDate, onClose, onDeleted }: Props) {
   const { t } = useI18n()
+  const { teamId } = useTeam()
   const auth = useAuth()
   const [opponent, setOpponent] = useState(game?.opponent ?? '')
   const [label, setLabel] = useState(game?.label ?? '')
@@ -31,7 +33,7 @@ export function GameEditor({ tournamentId, game, defaultDate, onClose, onDeleted
     setBusy(true)
     setError(null)
     try {
-      await whenSaved(saveGame(tournamentId, game?.id ?? null, { opponent, label, date, time, cap }, editorOf(auth)))
+      await whenSaved(saveGame(teamId, tournamentId, game?.id ?? null, { opponent, label, date, time, cap }, editorOf(auth)))
       onClose()
     } catch (err) {
       setError(t('app.error', { message: (err as Error).message }))
@@ -43,7 +45,7 @@ export function GameEditor({ tournamentId, game, defaultDate, onClose, onDeleted
     if (!game || !window.confirm(t('game.deleteConfirm', { name: game.label || game.opponent }))) return
     setBusy(true)
     try {
-      await whenSaved(deleteGame(tournamentId, game.id))
+      await whenSaved(deleteGame(teamId, tournamentId, game.id))
       onClose()
       onDeleted?.()
     } catch (err) {

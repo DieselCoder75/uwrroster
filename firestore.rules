@@ -1,7 +1,8 @@
 rules_version = '2';
 
-// Access model: only invited coaches can use the app.
-// An invite is a document in /coaches keyed by the coach's lowercase email.
+// Access model: only invited users can use the app.
+// An invite is a document in /coaches keyed by the user's lowercase email; role 'admin' makes them an admin.
+// What a user may do in a team is kept on the team: members see it, coaches may also change it.
 // Sign-in uses email links or Google accounts, so a signed-in email is always verified.
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -60,13 +61,75 @@ service cloud.firestore {
         && d.captain in [null, 'captain', 'viceCaptain'];
     }
 
-    match /players/{playerId} {
-      allow read, delete: if isCoach();
-      allow create, update: if isCoach() && validPlayer();
+    function team(teamId) {
+      return get(/databases/$(database)/documents/teams/$(teamId)).data;
     }
 
-    match /tournaments/{tournamentId}/{rest=**} {
-      allow read, write: if isCoach();
+    // Admins see and change every team. Others see the teams they are members of, and change those they coach.
+    function canView(teamId) {
+      return isAdmin() || (isCoach() && myEmail() in team(teamId).members);
+    }
+
+    function canCoach(teamId) {
+      return isAdmin() || (isCoach() && myEmail() in team(teamId).coaches);
+    }
+
+    function validTeam() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['name', 'gameName', 'members', 'coaches', 'createdBy', 'createdAt', 'updatedAt'])
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 80
+        && d.gameName is string && d.gameName.size() <= 40
+        && d.members is list && d.members.size() <= 200
+        && d.coaches is list && d.members.hasAll(d.coaches);
+    }
+
+    // Banner photos live in Firestore (Cloud Storage needs the paid plan), so they must fit in one document.
+    function validPhoto() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['large', 'small', 'type', 'width', 'height', 'focus', 'updatedBy', 'updatedAt'])
+        && d.large is bytes && d.large.size() <= 600000
+        && d.small is bytes && d.small.size() <= 200000
+        && d.type in ['image/webp', 'image/jpeg']
+        && d.focus is string && d.focus.size() <= 20;
+    }
+
+    match /teams/{teamId} {
+      // Rules are not filters: a non-admin lists teams with a members array-contains query.
+      allow read: if isAdmin() || (isCoach() && myEmail() in resource.data.members);
+      allow create, update: if isAdmin() && validTeam();
+      allow delete: if isAdmin();
+
+      match /players/{playerId} {
+        allow read: if canView(teamId);
+        allow delete: if canCoach(teamId);
+        allow create, update: if canCoach(teamId) && validPlayer();
+      }
+
+      match /tournaments/{rest=**} {
+        allow read: if canView(teamId);
+        allow write: if canCoach(teamId);
+      }
+
+      match /images/{page} {
+        allow read: if canView(teamId);
+        allow create, update: if isAdmin() && validPhoto();
+        allow delete: if isAdmin();
+      }
+    }
+
+    // Before teams: one shared pool and tournament list. Kept read-only so the first admin can copy it into
+    // the default team (src/teams/migrate.ts).
+    match /players/{playerId} {
+      allow read: if isAdmin();
+    }
+
+    match /tournaments/{rest=**} {
+      allow read: if isAdmin();
+    }
+
+    // Marks that the copy into the default team has been made.
+    match /meta/{docId} {
+      allow read, write: if isAdmin();
     }
   }
 }

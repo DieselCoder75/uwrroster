@@ -4,6 +4,7 @@ import { useI18n } from '../i18n'
 import { POSITIONS, duplicateNumbers, fullName, type Player } from '../players/model'
 import { whenSaved } from '../lib/online'
 import { saveSquad } from './store'
+import { useTeam } from '../teams/TeamProvider'
 
 type Props = {
   tournamentId: string
@@ -16,6 +17,7 @@ type Props = {
 /** Edit the numbers squad players wear in this tournament only. */
 export function NumbersEditor({ tournamentId, squad, numbers, players, onClose }: Props) {
   const { t } = useI18n()
+  const { teamId } = useTeam()
   const picked = players.filter((p) => squad.includes(p.id))
   // Number text per player as typed; only differences from the pool number are saved.
   const [numberText, setNumberText] = useState<Record<string, string>>(() =>
@@ -39,7 +41,7 @@ export function NumbersEditor({ tournamentId, squad, numbers, players, onClose }
         if (n !== null && n !== p.number) overrides[p.id] = n
       }
       await whenSaved(
-        saveSquad(
+        saveSquad(teamId,
           tournamentId,
           picked.map((p) => p.id),
           overrides,
