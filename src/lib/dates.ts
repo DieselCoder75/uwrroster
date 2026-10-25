@@ -24,3 +24,17 @@ export function formatRange(start: string, end: string, lang: Lang): string {
   if (b) return fmt(b)
   return ''
 }
+
+/** Today's date on this device as YYYY-MM-DD. */
+export function todayIso(now = new Date()): string {
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+}
+
+/** Whole days from one YYYY-MM-DD date to another (negative when it has passed). */
+export function daysUntil(iso: string, from: string): number {
+  const a = parse(from)
+  const b = parse(iso)
+  if (!a || !b) return 0
+  // Round so a daylight-saving change in between doesn't cost a day.
+  return Math.round((b.getTime() - a.getTime()) / 86_400_000)
+}
