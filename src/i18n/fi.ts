@@ -34,7 +34,9 @@ export const fi = {
   'coaches.countLabel': 'Valmentajaa',
 
   'login.title': 'Kirjaudu sisään',
-  'login.intro': 'Syötä sähköpostiosoitteesi, niin lähetämme sinulle kirjautumislinkin.',
+  'login.google': 'Kirjaudu Google-tilillä',
+  'login.or': 'tai',
+  'login.intro': 'Ilman Google-tiliä: syötä sähköpostiosoitteesi, niin lähetämme sinulle kirjautumislinkin.',
   'login.email': 'Sähköposti',
   'login.send': 'Lähetä linkki',
   'login.sending': 'Lähetetään…',

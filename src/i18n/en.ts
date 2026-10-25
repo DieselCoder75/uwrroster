@@ -36,7 +36,9 @@ export const en: Messages = {
   'coaches.countLabel': 'Coaches',
 
   'login.title': 'Sign in',
-  'login.intro': "Enter your email and we'll send you a sign-in link.",
+  'login.google': 'Sign in with Google',
+  'login.or': 'or',
+  'login.intro': "No Google account? Enter your email and we'll send you a sign-in link.",
   'login.email': 'Email',
   'login.send': 'Send link',
   'login.sending': 'Sending…',

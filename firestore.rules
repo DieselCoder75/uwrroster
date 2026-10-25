@@ -2,7 +2,7 @@ rules_version = '2';
 
 // Access model: only invited coaches can use the app.
 // An invite is a document in /coaches keyed by the coach's lowercase email.
-// Sign-in uses email links, so a signed-in email is always verified.
+// Sign-in uses email links or Google accounts, so a signed-in email is always verified.
 service cloud.firestore {
   match /databases/{database}/documents {
 
