@@ -23,7 +23,7 @@ export function HomePage() {
   return (
     <div className="stack">
       <PageHero
-        image="20250927-172557"
+        image="em-pronssimitalistit"
         tag={t('home.tag')}
         sub={t('home.intro')}
       />

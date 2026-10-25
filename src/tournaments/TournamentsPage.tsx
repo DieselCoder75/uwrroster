@@ -21,7 +21,7 @@ export function TournamentsPage() {
   return (
     <div className="stack">
       <PageHero
-        image="em-pronssimitalistit"
+        image="20250927-172557"
         tag={t('tournaments.tag')}
         title={t('tournaments.title')}
         count={state.data.length}
