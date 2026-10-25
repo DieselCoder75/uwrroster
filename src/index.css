@@ -1570,10 +1570,20 @@ ul.tiles {
 }
 
 .select-hint {
+  position: fixed;
+  z-index: 40;
+  left: 50%;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(560px, calc(100% - 32px));
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+.select-hint > span {
+  flex: 1;
 }
 
 .lineup-layout {

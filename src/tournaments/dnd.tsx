@@ -10,6 +10,7 @@ import {
   useSensors,
   type CollisionDetection,
 } from '@dnd-kit/core'
+import { useRef } from 'react'
 import { useI18n } from '../i18n'
 import { fullName, playablePositions, type Player } from '../players/model'
 import { fitIssue, type Slot } from './model'
@@ -78,6 +79,8 @@ export function ZoneBox({ zone, title, count, limit, armed, seats, onTap, childr
   )
 }
 
+const DOUBLE_TAP_MS = 350
+
 export function PlayerChip({
   player,
   slot,
@@ -86,6 +89,7 @@ export function PlayerChip({
   note,
   load,
   onTap,
+  onDoubleTap,
 }: {
   player: Player
   slot: Slot | null
@@ -96,14 +100,30 @@ export function PlayerChip({
   /** Periods played in the tournament's other games. */
   load?: number
   onTap: () => void
+  /** A quick second tap or click, e.g. to place the player straight into their main position. */
+  onDoubleTap?: () => void
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: player.id })
+  // Our own double-tap timing, because phones don't reliably fire dblclick.
+  const lastTap = useRef(0)
+
+  function onClick() {
+    const now = Date.now()
+    if (onDoubleTap && now - lastTap.current < DOUBLE_TAP_MS) {
+      lastTap.current = 0
+      onDoubleTap()
+      return
+    }
+    lastTap.current = now
+    onTap()
+  }
+
   return (
     <button
       ref={setNodeRef}
       type="button"
       className={`chip-player ${selected ? 'selected' : ''} ${isDragging ? 'ghost' : ''}`}
-      onClick={onTap}
+      onClick={onClick}
       {...attributes}
       {...listeners}
     >

@@ -156,7 +156,7 @@ export const fi = {
   'squad.dialogTitle': 'Turnauksen joukkue',
   'squad.selected': '{count} valittu',
   'squad.pageHelp': 'Raahaa turnaukseen lähtevät pelaajat pelaajapoolista joukkueeseen. Pelien kokoonpanot valitaan tästä joukkueesta.',
-  'squad.hint': 'Raahaa pelaaja joukkueeseen tai takaisin pooliin, tai napauta pelaajaa ja sitten aluetta.',
+  'squad.hint': 'Raahaa pelaaja joukkueeseen tai takaisin pooliin, tai napauta pelaajaa ja sitten aluetta. Tuplanapautus siirtää pelaajan suoraan.',
   'squad.pool': 'Pelaajapooli',
   'squad.toSquad': '→ Joukkue',
   'squad.toPool': '→ Pooli',
@@ -195,7 +195,7 @@ export const fi = {
   'lineup.available': 'Ei kokoonpanossa',
   'lineup.allPlaced': 'Kaikki joukkueen pelaajat on sijoitettu.',
   'lineup.noSquad': 'Valitse ensin turnauksen joukkue.',
-  'lineup.hint': 'Raahaa pelaaja paikalleen, tai napauta pelaajaa ja sitten paikkaa.',
+  'lineup.hint': 'Raahaa pelaaja paikalleen tai napauta pelaajaa ja sitten paikkaa. Tuplanapautus vie pelaajan pääpelipaikalleen tai pois kokoonpanosta.',
   'lineup.selected': 'Valittu: {name}. Napauta paikkaa.',
   'lineup.cancelSelect': 'Peru valinta',
   'lineup.remove': 'Poista kokoonpanosta',
@@ -241,4 +241,5 @@ export const fi = {
   'load.chip': '{count} erää',
   'load.chipTitle': 'Pelattuja eriä turnauksen muissa peleissä: {count}',
   'tournaments.daysTo': '{count} päivää turnauksen alkuun',
+  'lineup.positionFull': '{pos}: ei vapaita paikkoja. Siirrä ensin joku pois.',
 } as const
