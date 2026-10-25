@@ -8,7 +8,7 @@ import { usePlayers } from '../players/store'
 import { GameEditor } from './GameEditor'
 import { LoadTable } from './LoadTable'
 import { TournamentEditor } from './TournamentEditor'
-import { gameLineups, squadNumberClashes, summarize, tournamentNumber, type Game } from './model'
+import { gameLineups, gameTitle, squadNumberClashes, summarize, tournamentNumber, type Game } from './model'
 import { useGames, useTournament } from './store'
 
 export function TournamentPage() {
@@ -87,7 +87,7 @@ export function TournamentPage() {
                     <span className="grow">
                       <span className="game-title">
                         {g.cap && <span className={`cap-dot cap-${g.cap}`} title={t(`cap.${g.cap}`)} />}
-                        {t('game.vs')} {g.opponent}
+                        {gameTitle(g)}
                       </span>
                       {g.label && <span className="muted small"> · {g.label}</span>}
                     </span>

@@ -45,6 +45,19 @@ export type Game = {
 
 export type GameInput = Omit<Game, 'id'>
 
+/** Our team's name in game titles. */
+export const OUR_TEAM = 'Finland'
+
+/**
+ * The game's name as it is announced: the team in blue caps first, white second, e.g. "Finland vs Germany"
+ * or "Denmark vs Finland". Without a cap colour it is just "vs Denmark".
+ */
+export function gameTitle(game: Pick<Game, 'opponent' | 'cap'>): string {
+  if (game.cap === 'blue') return `${OUR_TEAM} vs ${game.opponent}`
+  if (game.cap === 'white') return `${game.opponent} vs ${OUR_TEAM}`
+  return `vs ${game.opponent}`
+}
+
 export function tournamentNumber(tour: Pick<Tournament, 'numbers'>, player: Pick<Player, 'id' | 'number'>): number | null {
   return tour.numbers[player.id] ?? player.number
 }

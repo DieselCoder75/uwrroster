@@ -4,6 +4,7 @@ import {
   emptyLineup,
   fitIssue,
   gameLineups,
+  gameTitle,
   moveProblem,
   movePlayer,
   pruneLineup,
@@ -202,5 +203,16 @@ describe('game order', () => {
       g('noTimeNew', '2027-02-27', '', 9),
     ])
     expect(sorted.map((x) => x.id)).toEqual(['sameEarlier', 'sameLater', 'noTimeOld', 'noTimeNew', 'noDate'])
+  })
+})
+
+describe('game title', () => {
+  it('names the team in blue first and the team in white second', () => {
+    expect(gameTitle({ opponent: 'Germany', cap: 'blue' })).toBe('Finland vs Germany')
+    expect(gameTitle({ opponent: 'Denmark', cap: 'white' })).toBe('Denmark vs Finland')
+  })
+
+  it('shows only the opponent while the cap colour is not known', () => {
+    expect(gameTitle({ opponent: 'Norway', cap: null })).toBe('vs Norway')
   })
 })

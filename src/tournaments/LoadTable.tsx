@@ -1,7 +1,7 @@
 import { useI18n } from '../i18n'
 import { formatDay } from '../lib/dates'
 import { POSITIONS, fullName, type Player } from '../players/model'
-import { plannedPeriods, tournamentLoad, tournamentNumber, type Game, type Slot, type Tournament } from './model'
+import { gameTitle, plannedPeriods, tournamentLoad, tournamentNumber, type Game, type Slot, type Tournament } from './model'
 
 /** Periods each squad player plays in each game, so the coach can share the load evenly. */
 export function LoadTable({ tour, games, players }: { tour: Tournament; games: Game[]; players: Player[] }) {
@@ -40,7 +40,7 @@ export function LoadTable({ tour, games, players }: { tour: Tournament; games: G
                 <th className="load-player">{t('load.player')}</th>
                 <th className="load-total">{t('load.periods')}</th>
                 {games.map((g) => (
-                  <th key={g.id} title={`${t('game.vs')} ${g.opponent}`}>
+                  <th key={g.id} title={gameTitle(g)}>
                     <span className="load-game-day">{formatDay(g.date, lang)}</span>
                     <span className="load-game-time">{g.time || '–'}</span>
                   </th>

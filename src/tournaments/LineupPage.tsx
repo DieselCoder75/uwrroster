@@ -15,6 +15,7 @@ import {
   SLOTS,
   emptyLineup,
   gameLineups,
+  gameTitle,
   lineupIds,
   movePlayer,
   moveProblem,
@@ -202,7 +203,7 @@ export function LineupPage() {
         title={
           <span className="game-heading">
             {game.cap && <span className={`cap-dot big cap-${game.cap}`} title={t(`cap.${game.cap}`)} />}
-            {t('game.vs')} {game.opponent}
+            {gameTitle(game)}
           </span>
         }
         sub={[formatDay(game.date, lang), game.time, game.label, game.cap ? t(`cap.${game.cap}`) : ''].filter(Boolean).join(' · ')}
