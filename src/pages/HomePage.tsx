@@ -57,10 +57,13 @@ export function HomePage() {
                     )}
                   </span>
                   <span className="upcoming-text">
-                    <span className="eyebrow">{formatRange(tour.startDate, tour.endDate, lang)}</span>
+                    <span className="eyebrow">
+                      {tour.kind === 'camp' && <span className="kind-tag">{t('event.kind.camp')}</span>}
+                      {formatRange(tour.startDate, tour.endDate, lang)}
+                    </span>
                     <span className="upcoming-name">{tour.name}</span>
                     <span className="muted small">
-                      {[tour.location, t('tournaments.squadCount', { count: tour.squad.length, size: tour.squadSize })]
+                      {[tour.location, t(tour.kind === 'camp' ? 'camp.count' : 'tournaments.squadCount', { count: tour.squad.length, size: tour.squadSize })]
                         .filter(Boolean)
                         .join(' · ')}
                     </span>

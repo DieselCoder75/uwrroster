@@ -5,6 +5,7 @@ import { useI18n } from '../i18n'
 import { formatDay, formatRange } from '../lib/dates'
 import { POSITIONS, fullName } from '../players/model'
 import { usePlayers } from '../players/store'
+import { CampPage } from './CampPage'
 import { GameEditor } from './GameEditor'
 import { GameName } from './GameName'
 import { LoadTable } from './LoadTable'
@@ -39,6 +40,8 @@ export function TournamentPage() {
       </div>
     )
   }
+
+  if (tour.kind === 'camp') return <CampPage tour={tour} players={players.players} />
 
   const squadPlayers = players.players.filter((p) => tour.squad.includes(p.id))
   const clashes = squadNumberClashes(tour, players.players)

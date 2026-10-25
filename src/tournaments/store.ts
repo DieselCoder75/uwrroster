@@ -32,6 +32,7 @@ import {
   type Tournament,
   type TournamentInput,
 } from './model'
+import { DEFAULT_POOLS, emptyPool, type CampPool } from './camp'
 
 const tournamentsCol = collection(db, 'tournaments')
 const gamesCol = (tid: string) => collection(db, 'tournaments', tid, 'games')
@@ -40,8 +41,10 @@ const str = (v: unknown) => (typeof v === 'string' ? v : '')
 const ids = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [])
 
 function tournamentFromDoc(id: string, d: Record<string, unknown>): Tournament {
+  const kind = d.kind === 'camp' ? 'camp' : 'tournament'
   return {
     id,
+    kind,
     name: str(d.name),
     location: str(d.location),
     startDate: str(d.startDate),
@@ -49,7 +52,19 @@ function tournamentFromDoc(id: string, d: Record<string, unknown>): Tournament {
     squadSize: typeof d.squadSize === 'number' ? d.squadSize : DEFAULT_SQUAD_SIZE,
     squad: ids(d.squad),
     numbers: numberMap(d.numbers),
+    pools: poolsFrom(d.pools, kind),
   }
+}
+
+function poolsFrom(v: unknown, kind: string): CampPool[] {
+  const list = Array.isArray(v)
+    ? v
+        .filter((x) => x && typeof x === 'object')
+        .map((x: Record<string, unknown>, i): CampPool => ({ id: str(x.id) || `p${i + 1}`, name: str(x.name), blue: ids(x.blue), white: ids(x.white) }))
+    : []
+  // A camp always has at least one pool to split players into.
+  if (kind === 'camp' && list.length === 0) return Array.from({ length: DEFAULT_POOLS }, (_, i) => emptyPool(`p${i + 1}`))
+  return list
 }
 
 function numberMap(v: unknown): Record<string, number> {
@@ -184,6 +199,10 @@ export function saveTournament(id: string | null, input: TournamentInput): { id:
 
 export function saveSquad(tid: string, squad: string[], numbers: Record<string, number>): Promise<void> {
   return updateDoc(doc(tournamentsCol, tid), { squad, numbers, updatedAt: serverTimestamp() })
+}
+
+export function savePools(tid: string, pools: CampPool[]): Promise<void> {
+  return updateDoc(doc(tournamentsCol, tid), { pools, updatedAt: serverTimestamp() })
 }
 
 /** Deletes a tournament and its games (Firestore doesn't remove subcollections on its own). */

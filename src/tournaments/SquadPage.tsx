@@ -59,6 +59,7 @@ export function SquadPage() {
   const poolShown = pool.filter((p) => matchesSearch(p, query))
   const clashes = squadNumberClashes(tour, poolPlayers)
   const numbers = tour.numbers
+  const camp = tour.kind === 'camp'
 
   async function persist(ids: Set<string>) {
     setPending((n) => n + 1)
@@ -148,9 +149,9 @@ export function SquadPage() {
             ← {tour.name}
           </Link>
         }
-        tag={t('squad.tag')}
-        title={t('squad.dialogTitle')}
-        sub={t('squad.pageHelp')}
+        tag={t(camp ? 'camp.squadTag' : 'squad.tag')}
+        title={t(camp ? 'camp.squadTitle' : 'squad.dialogTitle')}
+        sub={t(camp ? 'camp.squadHelp' : 'squad.pageHelp')}
       />
 
       <div className="lineup-bar">
@@ -178,7 +179,7 @@ export function SquadPage() {
           <span>{t('lineup.selected', { name: fullName(selectedPlayer) })}</span>
           {/* Long lists on phones: move the tapped player without scrolling to the other area. */}
           <button className="btn btn-small btn-primary" onClick={() => onZoneTap(selectedInSquad ? POOL : SQUAD)}>
-            {selectedInSquad ? t('squad.toPool') : t('squad.toSquad')}
+            {selectedInSquad ? t('squad.toPool') : t(camp ? 'camp.toCamp' : 'squad.toSquad')}
           </button>
           <button className="btn btn-small" onClick={() => setSelected(null)}>
             {t('lineup.cancelSelect')}
@@ -190,7 +191,7 @@ export function SquadPage() {
         <div className="squad-layout">
           <ZoneBox
             zone={SQUAD}
-            title={t('squad.title')}
+            title={t(camp ? 'camp.participants' : 'squad.title')}
             count={squad.length}
             limit={tour.squadSize}
             armed={!!selected && !selectedInSquad}

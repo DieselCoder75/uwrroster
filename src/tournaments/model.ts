@@ -1,4 +1,5 @@
 import { duplicateNumbers, playablePositions, type Player, type Position } from '../players/model'
+import type { CampPool } from './camp'
 
 /** Default squad: 12 in the game (4 per position) and 3 substitutes. Special tournaments allow more. */
 export const DEFAULT_SQUAD_SIZE = 15
@@ -12,8 +13,12 @@ export const emptyLineup = (): Lineup => ({ GK: [], DEF: [], ATT: [], SUB: [] })
 
 export type Cap = 'blue' | 'white'
 
+/** A tournament has games with lineups; a camp splits its players into pools and sides instead. */
+export type EventKind = 'tournament' | 'camp'
+
 export type Tournament = {
   id: string
+  kind: EventKind
   name: string
   location: string
   startDate: string // YYYY-MM-DD
@@ -23,6 +28,8 @@ export type Tournament = {
   squad: string[]
   /** Shirt numbers used in this tournament when they differ from the player's usual number. */
   numbers: Record<string, number>
+  /** Camps only: the pools, each split into two sides. */
+  pools: CampPool[]
 }
 
 export type TournamentInput = Omit<Tournament, 'id'>
