@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { PageHero } from '../components/PageHero'
 import { useI18n } from '../i18n'
 import { formatDay, formatRange } from '../lib/dates'
 import { POSITIONS, fullName } from '../players/model'
@@ -42,19 +43,24 @@ export function TournamentPage() {
 
   return (
     <div className="stack">
-      <Link to="/tournaments" className="back-link">
-        {t('tournaments.back')}
-      </Link>
-
-      <div className="page-head">
-        <div>
-          <h1>{tour.name}</h1>
-          <p className="muted">{[formatRange(tour.startDate, tour.endDate, lang), tour.location].filter(Boolean).join(' · ')}</p>
-        </div>
-        <button className="btn" onClick={() => setEditing(true)}>
-          {t('tournament.edit')}
-        </button>
-      </div>
+      <PageHero
+        image="keskikentta"
+        top={
+          <Link to="/tournaments" className="back-link">
+            {t('tournaments.back')}
+          </Link>
+        }
+        tag={formatRange(tour.startDate, tour.endDate, lang)}
+        title={tour.name}
+        sub={tour.location}
+        count={`${tour.squad.length}/${tour.squadSize}`}
+        countLabel={t('tournament.squadLabel')}
+        actions={
+          <button className="btn" onClick={() => setEditing(true)}>
+            {t('tournament.edit')}
+          </button>
+        }
+      />
 
       <div className="two-col">
         <section className="card stack">

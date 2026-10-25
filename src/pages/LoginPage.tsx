@@ -2,7 +2,9 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
 import { completeSignIn, isSignInLink, pendingEmail, sendLink } from '../auth/signInLink'
+import { Brand, Footer } from '../components/Brand'
 import { LanguageSwitch } from '../components/LanguageSwitch'
+import { heroSrcSet } from '../components/heroImages'
 import { useI18n } from '../i18n'
 import { isValidEmail } from '../lib/email'
 
@@ -66,12 +68,8 @@ export function LoginPage() {
   }
 
   return (
-    <div className="login">
-      <div className="login-card card">
-        <div className="login-top">
-          <h1 className="brand">{t('app.name')}</h1>
-          <LanguageSwitch />
-        </div>
+    <LoginShell>
+      <div className="login-card">
 
         {step.kind === 'enterEmail' && (
           <form onSubmit={onSend} className="stack">
@@ -128,6 +126,29 @@ export function LoginPage() {
 
         {error && <p className="error">{t('app.error', { message: error })}</p>}
       </div>
+    </LoginShell>
+  )
+}
+
+/** Full-screen pool photo with the website's header, title and footer around the sign-in card. */
+export function LoginShell({ children }: { children: React.ReactNode }) {
+  const { t } = useI18n()
+  return (
+    <div className="login">
+      <img className="hero-img" srcSet={heroSrcSet('julia-vs-meri')} sizes="100vw" alt="" />
+      <div className="hero-shade" />
+      <header className="topbar login-bar">
+        <Brand />
+        <LanguageSwitch />
+      </header>
+      <main className="login-main">
+        <div className="tag">{t('hero.tag')}</div>
+        <h1 className="hero-title">
+          UWR <span className="accent">Roster</span>
+        </h1>
+        {children}
+      </main>
+      <Footer />
     </div>
   )
 }

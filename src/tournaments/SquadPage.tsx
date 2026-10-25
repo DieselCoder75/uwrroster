@@ -1,6 +1,8 @@
 import { DndContext, DragOverlay, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { PageHero } from '../components/PageHero'
+import { SearchBox } from '../components/SearchBox'
 import { useI18n } from '../i18n'
 import { POSITIONS, fullName, matchesSearch, type Player } from '../players/model'
 import { usePlayers } from '../players/store'
@@ -133,16 +135,18 @@ export function SquadPage() {
 
   return (
     <div className="stack">
-      <Link to={`/tournaments/${tid}`} className="back-link">
-        ← {tour.name}
-      </Link>
-
-      <div className="page-head">
-        <div>
-          <h1>{t('squad.dialogTitle')}</h1>
-          <p className="muted">{t('squad.pageHelp')}</p>
-        </div>
-      </div>
+      <PageHero
+        compact
+        image="tiukkakarvauspohjassa"
+        top={
+          <Link to={`/tournaments/${tid}`} className="back-link">
+            ← {tour.name}
+          </Link>
+        }
+        tag={t('squad.tag')}
+        title={t('squad.dialogTitle')}
+        sub={t('squad.pageHelp')}
+      />
 
       <div className="lineup-bar">
         <strong className={squad.length > tour.squadSize ? 'warn' : squad.length === tour.squadSize ? 'ok-text' : ''}>
@@ -192,7 +196,7 @@ export function SquadPage() {
           </ZoneBox>
 
           <ZoneBox zone={POOL} title={t('squad.pool')} count={pool.length} armed={selectedInSquad} onTap={() => onZoneTap(POOL)}>
-            <input type="search" placeholder={t('players.search')} value={query} onChange={(e) => setQuery(e.target.value)} />
+            <SearchBox value={query} onChange={setQuery} placeholder={t('players.search')} />
             {pool.length === 0 && <p className="muted small">{t('squad.poolEmpty')}</p>}
             {grouped(poolShown)}
           </ZoneBox>
