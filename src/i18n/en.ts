@@ -207,7 +207,7 @@ export const en: Messages = {
   'lineup.copyFrom': 'Copy from previous game',
   'lineup.copyConfirm': 'Replace this lineup with the one from {name}?',
   'lineup.clear': 'Clear',
-  'lineup.clearConfirm': 'Clear the lineup?',
+  'lineup.clearConfirm': 'Clear the lineup for both periods?',
   'lineup.saving': 'Saving…',
   'lineup.saved': 'Saved',
   'lineup.fit.locked': 'Locked to {pos}',

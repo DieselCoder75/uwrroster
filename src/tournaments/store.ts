@@ -144,11 +144,13 @@ function gameFromDoc(id: string, d: Record<string, unknown>): Game {
 
 export type Loadable<T> = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; data: T }
 
-function useSnapshot<T>(subscribe: (set: (s: Loadable<T>) => void) => () => void, deps: unknown[]): Loadable<T> {
-  const [state, setState] = useState<Loadable<T>>({ status: 'loading' })
+function useSnapshot<T>(subscribe: (set: (s: Loadable<T>) => void) => () => void, deps: string[]): Loadable<T> {
+  const key = deps.join('/')
+  const [state, setState] = useState<{ key: string; value: Loadable<T> }>({ key, value: { status: 'loading' } })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => subscribe(setState), deps)
-  return state
+  useEffect(() => subscribe((value) => setState({ key, value })), deps)
+  // Another tournament's data is never shown while this one's loads.
+  return state.key === key ? state.value : { status: 'loading' }
 }
 
 export function useTournaments(teamId: string): Loadable<Tournament[]> {
@@ -192,7 +194,12 @@ export function useGames(teamId: string, tid: string): Loadable<Game[]> {
 /** Returns the tournament id straight away (also offline) and the write to wait for. */
 export function saveTournament(teamId: string, id: string | null, input: TournamentInput): { id: string; saved: Promise<void> } {
   const data = { ...input, name: input.name.trim(), location: input.location.trim(), updatedAt: serverTimestamp() }
-  if (id) return { id, saved: setDoc(doc(tournamentsCol(teamId), id), data, { merge: true }) }
+  if (id) {
+    // The squad and its numbers are saved on the squad page; leaving them out here means an edit made in the
+    // tournament dialog never puts back an older squad that another coach (or tab) has changed meanwhile.
+    const { squad: _squad, numbers: _numbers, ...details } = data
+    return { id, saved: setDoc(doc(tournamentsCol(teamId), id), details, { merge: true }) }
+  }
   const ref = doc(tournamentsCol(teamId))
   return { id: ref.id, saved: setDoc(ref, { ...data, createdAt: serverTimestamp() }) }
 }

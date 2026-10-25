@@ -8,9 +8,12 @@ import { OUR_TEAM, gameTitle, plannedPeriods, tournamentLoad, tournamentNumber, 
 export function LoadTable({ tour, games, players }: { tour: Tournament; games: Game[]; players: Player[] }) {
   const { t, lang } = useI18n()
   const { team } = useTeam()
-  const squad = players.filter((p) => tour.squad.includes(p.id))
-  const load = tournamentLoad(games, tour.squad)
-  const planned = plannedPeriods(games, tour.squad)
+  const inSquad = new Set(tour.squad)
+  const squad = players.filter((p) => inSquad.has(p.id))
+  // Deleted players are left out, as on the rest of the page.
+  const squadIds = squad.map((p) => p.id)
+  const load = tournamentLoad(games, squadIds)
+  const planned = plannedPeriods(games, squadIds)
   // Grouped by main position like the squad list, so players who share the work sit together.
   const rows = POSITIONS.flatMap((pos) => squad.filter((p) => p.mainPosition === pos))
   const average = rows.length ? rows.reduce((n, p) => n + (load.get(p.id)?.periods ?? 0), 0) / rows.length : 0

@@ -33,7 +33,13 @@ export function NumbersEditor({ tournamentId, squad, numbers, players, onClose }
   const clashes = duplicateNumbers(picked.map((p) => parsed(p.id)))
 
   async function onSave() {
+    // A typo such as "1a" would otherwise quietly fall back to the player's usual number.
+    if (picked.some((p) => (numberText[p.id]?.trim() ?? '') !== '' && parsed(p.id) === null)) {
+      setError(t('player.error.number'))
+      return
+    }
     setBusy(true)
+    setError(null)
     try {
       const overrides: Record<string, number> = {}
       for (const p of picked) {

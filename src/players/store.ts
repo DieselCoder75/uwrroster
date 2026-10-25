@@ -1,4 +1,4 @@
-import { addDoc, collection, deleteDoc, doc, onSnapshot, serverTimestamp, setDoc, writeBatch } from 'firebase/firestore'
+import { addDoc, arrayRemove, collection, doc, getDocs, onSnapshot, query, serverTimestamp, setDoc, where, writeBatch } from 'firebase/firestore'
 import { useEffect, useState } from 'react'
 import { db } from '../firebase'
 import { POSITIONS, fullName, normalizePlayer, sortPlayers, type Player, type PlayerInput, type Position } from './model'
@@ -43,8 +43,13 @@ export async function savePlayer(teamId: string, id: string | null, input: Playe
   else await addDoc(playersCol(teamId), { ...data, createdAt: serverTimestamp() })
 }
 
-export function deletePlayer(teamId: string, id: string): Promise<void> {
-  return deleteDoc(doc(playersCol(teamId), id))
+/** Deletes a player and takes them out of the team's tournament and camp squads, so squad counts stay right. */
+export async function deletePlayer(teamId: string, id: string): Promise<void> {
+  const tournaments = await getDocs(query(collection(db, 'teams', teamId, 'tournaments'), where('squad', 'array-contains', id)))
+  const batch = writeBatch(db)
+  tournaments.forEach((tour) => batch.update(tour.ref, { squad: arrayRemove(id), updatedAt: serverTimestamp() }))
+  batch.delete(doc(playersCol(teamId), id))
+  await batch.commit()
 }
 
 /** Roster entries not yet in the pool, matched by name so re-running the import never duplicates. */

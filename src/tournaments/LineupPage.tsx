@@ -41,7 +41,13 @@ import { useTeam } from '../teams/TeamProvider'
 const POOL = 'POOL'
 type Zone = Slot | typeof POOL
 
+/** A fresh page per game, so a selection, an error or an open dialog doesn't carry over to the next game. */
 export function LineupPage() {
+  const { gid = '' } = useParams()
+  return <GameLineup key={gid} />
+}
+
+function GameLineup() {
   const { tid = '', gid = '' } = useParams()
   const { t, lang } = useI18n()
   const { teamId, canCoach } = useTeam()
@@ -103,10 +109,11 @@ export function LineupPage() {
   const periodDone = (p: Period) => summarize(p === 1 ? first : second).complete
   const prevGame = games.data[gameIndex - 1]
   const nextGame = games.data[gameIndex + 1]
+  // The nearest earlier game with someone from this squad in its lineup.
   const copySource = games.data
     .slice(0, gameIndex)
     .reverse()
-    .find((g) => SLOTS.some((s) => g.lineup[s].length > 0))
+    .find((g) => lineupIds(pruneLineup(g.lineup, squad)).length > 0)
 
   async function persist(next: Lineup | null) {
     const changed = period === 1 ? { ...version, lineup: next ?? emptyLineup() } : { ...version, lineup2: next }
@@ -176,8 +183,9 @@ export function LineupPage() {
     void write(() => saveVersion(teamId, tid, game, { ...version, lineup: pruneLineup(copySource.lineup, squad), lineup2: copySource.lineup2 }, by))
   }
 
+  // Clears both periods: otherwise an old second period would come back as the first one is picked again.
   function onClear() {
-    if (window.confirm(t('lineup.clearConfirm'))) void persist(emptyLineup())
+    if (window.confirm(t('lineup.clearConfirm'))) void write(() => saveVersion(teamId, tid, game, { ...version, lineup: emptyLineup(), lineup2: null }, by))
   }
 
   function onSameAsFirst() {

@@ -58,7 +58,7 @@ export function sortPlayers(players: Player[]): Player[] {
 export function matchesSearch(p: Player, query: string): boolean {
   const q = query.trim().toLowerCase()
   if (!q) return true
-  return String(p.number) === q || fullName(p).toLowerCase().includes(q)
+  return (p.number !== null && String(p.number) === q) || fullName(p).toLowerCase().includes(q)
 }
 
 /** Numbers that appear more than once (nulls ignored). */
