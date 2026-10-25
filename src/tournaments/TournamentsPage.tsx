@@ -54,9 +54,11 @@ export function TournamentsPage() {
                   {days(tour)}
                 </span>
               )}
-              <span className="bar" />
-              <span className="eyebrow">
+              <span className="tile-top">
+                <span className="bar" />
                 {tour.kind === 'camp' && <span className="kind-tag">{t('event.kind.camp')}</span>}
+              </span>
+              <span className="eyebrow">
                 {formatRange(tour.startDate, tour.endDate, lang)}
               </span>
               <h2>{tour.name}</h2>

@@ -90,10 +90,13 @@ export function PlayerChip({
   note,
   load,
   compact,
+  dragId,
   onTap,
   onDoubleTap,
 }: {
   player: Player
+  /** Needed when the same player is shown more than once on a page, e.g. in each camp pool. */
+  dragId?: string
   slot: Slot | null
   selected: boolean
   /** Number and name only, for narrow columns. */
@@ -107,7 +110,7 @@ export function PlayerChip({
   /** A quick second tap or click, e.g. to place the player straight into their main position. */
   onDoubleTap?: () => void
 }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: player.id })
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: dragId ?? player.id })
   // Our own double-tap timing, because phones don't reliably fire dblclick.
   const lastTap = useRef(0)
 

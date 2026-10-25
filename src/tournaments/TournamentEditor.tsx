@@ -36,7 +36,7 @@ export function TournamentEditor({ tournament, defaultKind = 'tournament', onClo
     const pools = Number(poolCount)
     if (!name.trim()) return setError(t('tournament.error.name'))
     if (camp) {
-      if (!Number.isInteger(size) || size < 2 || size > 50) return setError(t('camp.error.size'))
+      // Camps have no cap on players.
       if (!Number.isInteger(pools) || pools < 1 || pools > MAX_POOLS) return setError(t('camp.error.pools', { max: MAX_POOLS }))
       const freed = (tournament?.pools ?? []).slice(pools).some((p) => p.blue.length + p.white.length > 0)
       if (freed && !window.confirm(t('camp.poolsShrinkConfirm'))) return
@@ -50,7 +50,8 @@ export function TournamentEditor({ tournament, defaultKind = 'tournament', onClo
         location,
         startDate,
         endDate: endDate || startDate,
-        squadSize: size,
+        // A camp keeps whatever size it had; it isn't used for camps.
+        squadSize: camp ? (tournament?.squadSize ?? CAMP_SIZE) : size,
         squad: tournament?.squad ?? [],
         numbers: tournament?.numbers ?? {},
         // Games stay stored if a tournament is switched to a camp, and the pools if it is switched back.
@@ -122,16 +123,18 @@ export function TournamentEditor({ tournament, defaultKind = 'tournament', onClo
           </label>
         </div>
         <div className="row">
-          <label className="field">
-            <span>{t(camp ? 'camp.size' : 'tournament.squadSize')}</span>
-            <input
-              inputMode="numeric"
-              pattern="[0-9]*"
-              className="number-field"
-              value={squadSize}
-              onChange={(e) => setSquadSize(e.target.value)}
-            />
-          </label>
+          {!camp && (
+            <label className="field">
+              <span>{t('tournament.squadSize')}</span>
+              <input
+                inputMode="numeric"
+                pattern="[0-9]*"
+                className="number-field"
+                value={squadSize}
+                onChange={(e) => setSquadSize(e.target.value)}
+              />
+            </label>
+          )}
           {camp && (
             <label className="field">
               <span>{t('camp.poolCount')}</span>

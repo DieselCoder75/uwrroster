@@ -10,19 +10,18 @@ import { POSITIONS, fullName, type Player } from '../players/model'
 import {
   MAX_POOLS,
   SIDES,
-  bestSpot,
+  bestSide,
   emptyPool,
   movePoolPlayer,
   otherSide,
   prunePools,
   sideBalance,
+  sideOf,
   sortSide,
   splitEvenly,
-  spotOf,
   unplaced,
   type Balance,
   type CampPool,
-  type PoolSpot,
   type Side,
 } from './camp'
 import { ChipBody, PlayerChip, ZoneBox, collision, useDragSensors } from './dnd'
@@ -31,23 +30,27 @@ import { savePools } from './store'
 import { TournamentEditor } from './TournamentEditor'
 import { useTeam } from '../teams/TeamProvider'
 
-const REST = 'REST'
+const REST = 'rest'
 
-const zoneId = (spot: PoolSpot) => `${spot.pool}|${spot.side}`
+// Every player is split in every pool, so a chip, a zone and a selection all name the pool: "pool|side" for a
+// zone and "pool|playerId" for a dragged chip.
+type Choice = { pool: string; id: string }
+const zoneId = (pool: string, side: Side | typeof REST) => `${pool}|${side}`
 
-function spotFromZone(zone: string): PoolSpot | null {
+function parseZone(zone: string): { pool: string; side: Side | null } | null {
   const [pool, side] = zone.split('|')
-  return side === 'blue' || side === 'white' ? { pool, side } : null
+  if (side === 'blue' || side === 'white') return { pool, side }
+  return side === REST ? { pool, side: null } : null
 }
 
-/** A camp: the coach splits the camp's players into pools, and each pool into a blue and a white side. */
+/** A camp: in each pool, the coach splits all of the camp's players into a blue and a white side. */
 export function CampPage({ tour, players }: { tour: Tournament; players: Player[] }) {
   const { t, lang } = useI18n()
   const { teamId, canCoach } = useTeam()
   const navigate = useNavigate()
   const sensors = useDragSensors()
-  const [selected, setSelected] = useState<string | null>(null)
-  const [dragging, setDragging] = useState<string | null>(null)
+  const [selected, setSelected] = useState<Choice | null>(null)
+  const [dragging, setDragging] = useState<Choice | null>(null)
   const [pending, setPending] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState(false)
@@ -57,8 +60,10 @@ export function CampPage({ tour, players }: { tour: Tournament; players: Player[
   const byId = new Map(players.map((p) => [p.id, { ...p, number: tournamentNumber(tour, p) }]))
   const squad = tour.squad.filter((id) => byId.has(id))
   const pools = prunePools(tour.pools, squad)
-  const rest = unplaced(pools, squad)
-  const placedCount = squad.length - rest.length
+  const restOf = (pool: CampPool) => unplaced(pool, squad)
+  const poolsDone = pools.filter((p) => squad.length > 0 && restOf(p).length === 0).length
+  const anyRest = pools.some((p) => restOf(p).length > 0)
+  const anyPlaced = pools.some((p) => p.blue.length + p.white.length > 0)
 
   async function persist(next: CampPool[]) {
     setPending((n) => n + 1)
@@ -72,35 +77,46 @@ export function CampPage({ tour, players }: { tour: Tournament; players: Player[
     }
   }
 
-  function place(playerId: string, to: PoolSpot | null) {
-    const from = spotOf(pools, playerId)
-    if (from?.pool === to?.pool && from?.side === to?.side) return
-    void persist(movePoolPlayer(pools, playerId, to))
+  function place(pick: Choice, side: Side | null) {
+    const pool = pools.find((p) => p.id === pick.pool)
+    if (!pool || sideOf(pool, pick.id) === side) return
+    void persist(movePoolPlayer(pools, pick.pool, pick.id, side))
   }
 
   function onZoneTap(zone: string) {
-    if (!selected) return
-    place(selected, spotFromZone(zone))
+    const target = parseZone(zone)
+    // A player is moved within their own pool only.
+    if (!selected || !target || target.pool !== selected.pool) return
+    place(selected, target.side)
     setSelected(null)
   }
 
-  // Double tap: a player in a pool changes sides; a player not yet in a pool goes where they are needed most.
-  function onDoubleTap(playerId: string) {
+  // Double tap: a split player changes sides; one not yet split goes where their position is needed most.
+  function onDoubleTap(pick: Choice) {
     setSelected(null)
-    const from = spotOf(pools, playerId)
-    const p = byId.get(playerId)
-    if (from) return place(playerId, { pool: from.pool, side: otherSide(from.side) })
-    if (p) place(playerId, bestSpot(pools, p, byId))
+    const pool = pools.find((p) => p.id === pick.pool)
+    const p = byId.get(pick.id)
+    if (!pool || !p) return
+    const side = sideOf(pool, pick.id)
+    place(pick, side ? otherSide(side) : bestSide(pool, p, byId))
+  }
+
+  const pickFromDrag = (id: string): Choice => {
+    const [pool, player] = id.split('|')
+    return { pool, id: player }
   }
 
   function onDragStart(e: DragStartEvent) {
-    setDragging(String(e.active.id))
+    setDragging(pickFromDrag(String(e.active.id)))
     setSelected(null)
   }
 
   function onDragEnd(e: DragEndEvent) {
     setDragging(null)
-    if (e.over) place(String(e.active.id), spotFromZone(String(e.over.id)))
+    if (!e.over) return
+    const pick = pickFromDrag(String(e.active.id))
+    const target = parseZone(String(e.over.id))
+    if (target && target.pool === pick.pool) place(pick, target.side)
   }
 
   function onSplitRest() {
@@ -123,18 +139,22 @@ export function CampPage({ tour, players }: { tour: Tournament; players: Player[
 
   const poolName = (pool: CampPool, index: number) => pool.name || t('camp.pool', { n: index + 1 })
 
-  function chip(id: string, compact: boolean) {
+  const isSelected = (pick: Choice) => selected?.pool === pick.pool && selected.id === pick.id
+
+  function chip(pool: string, id: string) {
     const p = byId.get(id)
     if (!p) return null
+    const pick = { pool, id }
     return (
       <PlayerChip
         key={id}
+        dragId={`${pool}|${id}`}
         player={p}
         slot={null}
-        compact={compact}
-        selected={selected === id}
-        onTap={() => setSelected((s) => (s === id ? null : id))}
-        onDoubleTap={() => onDoubleTap(id)}
+        compact
+        selected={isSelected(pick)}
+        onTap={() => setSelected(isSelected(pick) ? null : pick)}
+        onDoubleTap={() => onDoubleTap(pick)}
       />
     )
   }
@@ -151,9 +171,10 @@ export function CampPage({ tour, players }: { tour: Tournament; players: Player[
     )
   }
 
-  const selectedPlayer = selected ? byId.get(selected) : undefined
-  const selectedPlaced = selected !== null && spotOf(pools, selected) !== null
-  const draggingPlayer = dragging ? byId.get(dragging) : undefined
+  const selectedPlayer = selected ? byId.get(selected.id) : undefined
+  const selectedPool = selected ? pools.find((p) => p.id === selected.pool) : undefined
+  const selectedPlaced = !!selected && !!selectedPool && sideOf(selectedPool, selected.id) !== null
+  const draggingPlayer = dragging ? byId.get(dragging.id) : undefined
 
   return (
     <div className="stack">
@@ -167,7 +188,7 @@ export function CampPage({ tour, players }: { tour: Tournament; players: Player[
         tag={[t('event.kind.camp'), formatRange(tour.startDate, tour.endDate, lang)].filter(Boolean).join(' · ')}
         title={tour.name}
         sub={tour.location}
-        count={`${tour.squad.length}/${tour.squadSize}`}
+        count={tour.squad.length}
         countLabel={t('camp.participantsLabel')}
         actions={
           canCoach && (
@@ -179,9 +200,9 @@ export function CampPage({ tour, players }: { tour: Tournament; players: Player[
       />
 
       <div className="lineup-bar">
-        <strong className={squad.length > 0 && rest.length === 0 ? 'ok-text' : ''}>
-          {squad.length > 0 && rest.length === 0 && '✓ '}
-          {t('camp.placed', { count: placedCount, total: squad.length })}
+        <strong className={squad.length > 0 && !anyRest ? 'ok-text' : ''}>
+          {squad.length > 0 && !anyRest && '✓ '}
+          {t('camp.poolsDone', { count: poolsDone, total: pools.length })}
         </strong>
         <SaveStatus pending={pending} />
         <span className="grow" />
@@ -190,10 +211,10 @@ export function CampPage({ tour, players }: { tour: Tournament; players: Player[
             <Link to={`/tournaments/${tid}/squad`} className="btn btn-small">
               {t('camp.pickPlayers')}
             </Link>
-            <button className="btn btn-small btn-primary" onClick={onSplitRest} disabled={rest.length === 0}>
+            <button className="btn btn-small btn-primary" onClick={onSplitRest} disabled={!anyRest}>
               {t('camp.splitRest')}
             </button>
-            <button className="btn btn-small" onClick={onClear} disabled={placedCount === 0}>
+            <button className="btn btn-small" onClick={onClear} disabled={!anyPlaced}>
               {t('lineup.clear')}
             </button>
           </>
@@ -215,7 +236,7 @@ export function CampPage({ tour, players }: { tour: Tournament; players: Player[
             <div className="notice select-hint" role="status">
               <span>{t('camp.selected', { name: fullName(selectedPlayer) })}</span>
               {selectedPlaced && (
-                <button className="btn btn-small" onClick={() => onZoneTap(REST)}>
+                <button className="btn btn-small" onClick={() => onZoneTap(zoneId(selected!.pool, REST))}>
                   {t('camp.toRest')}
                 </button>
               )}
@@ -226,63 +247,70 @@ export function CampPage({ tour, players }: { tour: Tournament; players: Player[
           )}
 
           <DndContext sensors={sensors} collisionDetection={collision} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setDragging(null)}>
-            <div className="camp-layout" inert={!canCoach}>
-              <ZoneBox zone={REST} className="zone-POOL camp-rest" title={t('camp.rest')} count={rest.length} armed={selectedPlaced} onTap={() => onZoneTap(REST)}>
-                {rest.length === 0 && <p className="muted small">{t('camp.allPlaced')}</p>}
-                {sortSide(rest.map((id) => byId.get(id)!)).map((p) => chip(p.id, false))}
-              </ZoneBox>
-
-              <div className="pools">
-                {pools.map((pool, i) => {
-                  const balance = { blue: sideBalance(pool.blue, byId), white: sideBalance(pool.white, byId) }
-                  const gap = Math.abs(balance.blue.total - balance.white.total)
-                  return (
-                    <section key={pool.id} className="card pool-card">
-                      <header className="pool-head">
-                        <h2>{poolName(pool, i)}</h2>
-                        <span className={`pool-score ${gap > 1 ? 'warn' : ''}`} title={t('camp.sideCounts')}>
-                          {balance.blue.total} – {balance.white.total}
-                        </span>
-                        <span className="grow" />
-                        {pools.length > 1 && (
-                          <button className="btn btn-small" onClick={() => onRemovePool(pool, i)} aria-label={t('camp.removePool', { name: poolName(pool, i) })}>
-                            ✕
-                          </button>
-                        )}
-                      </header>
-                      <div className="pool-sides">
-                        {SIDES.map((side: Side) => {
-                          const zone = zoneId({ pool: pool.id, side })
-                          const ids = sortSide(pool[side].map((id) => byId.get(id)!))
-                          return (
-                            <ZoneBox
-                              key={side}
-                              zone={zone}
-                              className={`side side-${side}`}
-                              title={
-                                <>
-                                  <span className={`cap-dot cap-${side}`} /> {t(`cap.${side}`)}
-                                </>
-                              }
-                              count={ids.length}
-                              armed={!!selected && (spotOf(pools, selected)?.pool !== pool.id || spotOf(pools, selected)?.side !== side)}
-                              onTap={() => onZoneTap(zone)}
-                            >
-                              {balanceRow(balance[side], balance[otherSide(side)])}
-                              {ids.map((p) => chip(p.id, true))}
-                            </ZoneBox>
-                          )
-                        })}
-                      </div>
-                    </section>
-                  )
-                })}
-                {pools.length < MAX_POOLS && (
-                  <button className="btn add-pool" onClick={onAddPool}>
-                    + {t('camp.addPool')}
-                  </button>
-                )}
-              </div>
+            <div className="pools" inert={!canCoach}>
+              {pools.map((pool, i) => {
+                const balance = { blue: sideBalance(pool.blue, byId), white: sideBalance(pool.white, byId) }
+                const gap = Math.abs(balance.blue.total - balance.white.total)
+                const rest = restOf(pool)
+                const mine = selected?.pool === pool.id
+                return (
+                  <section key={pool.id} className="card pool-card">
+                    <header className="pool-head">
+                      <h2>{poolName(pool, i)}</h2>
+                      <span className={`pool-score ${gap > 1 ? 'warn' : ''}`} title={t('camp.sideCounts')}>
+                        {balance.blue.total} – {balance.white.total}
+                      </span>
+                      <span className="grow" />
+                      {pools.length > 1 && (
+                        <button className="btn btn-small" onClick={() => onRemovePool(pool, i)} aria-label={t('camp.removePool', { name: poolName(pool, i) })}>
+                          ✕
+                        </button>
+                      )}
+                    </header>
+                    {(rest.length > 0 || (mine && selectedPlaced)) && (
+                      <ZoneBox
+                        zone={zoneId(pool.id, REST)}
+                        className="zone-POOL pool-rest"
+                        title={t('camp.rest')}
+                        count={rest.length}
+                        armed={mine && selectedPlaced}
+                        onTap={() => onZoneTap(zoneId(pool.id, REST))}
+                      >
+                        {sortSide(rest.map((id) => byId.get(id)!)).map((p) => chip(pool.id, p.id))}
+                      </ZoneBox>
+                    )}
+                    <div className="pool-sides">
+                      {SIDES.map((side: Side) => {
+                        const zone = zoneId(pool.id, side)
+                        const players = sortSide(pool[side].map((id) => byId.get(id)!))
+                        return (
+                          <ZoneBox
+                            key={side}
+                            zone={zone}
+                            className={`side side-${side}`}
+                            title={
+                              <>
+                                <span className={`cap-dot cap-${side}`} /> {t(`cap.${side}`)}
+                              </>
+                            }
+                            count={players.length}
+                            armed={mine && !!selectedPool && sideOf(selectedPool, selected!.id) !== side}
+                            onTap={() => onZoneTap(zone)}
+                          >
+                            {balanceRow(balance[side], balance[otherSide(side)])}
+                            {players.map((p) => chip(pool.id, p.id))}
+                          </ZoneBox>
+                        )
+                      })}
+                    </div>
+                  </section>
+                )
+              })}
+              {pools.length < MAX_POOLS && (
+                <button className="btn add-pool" onClick={onAddPool}>
+                  + {t('camp.addPool')}
+                </button>
+              )}
             </div>
 
             <DragOverlay dropAnimation={null}>{draggingPlayer && <ChipBody player={draggingPlayer} slot={null} compact lifted />}</DragOverlay>

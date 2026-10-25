@@ -27,7 +27,7 @@ import {
   type Tournament,
 } from '../src/tournaments/model'
 import {
-  bestSpot,
+  bestSide,
   emptyPool,
   movePoolPlayer,
   prunePools,
@@ -35,7 +35,7 @@ import {
   sideBalance,
   sortSide,
   splitEvenly,
-  spotOf,
+  sideOf,
   unplaced,
   type CampPool,
 } from '../src/tournaments/camp'
@@ -279,37 +279,55 @@ describe('camps', () => {
   const squad = [...byId.keys()]
   const pools = (): CampPool[] => [emptyPool('p1'), emptyPool('p2')]
 
-  it('moves a player between sides and pools, one place at a time', () => {
-    let ps = movePoolPlayer(pools(), 'd1', { pool: 'p1', side: 'blue' })
-    expect(spotOf(ps, 'd1')).toEqual({ pool: 'p1', side: 'blue' })
-    ps = movePoolPlayer(ps, 'd1', { pool: 'p2', side: 'white' })
-    expect(ps[0].blue).toEqual([])
-    expect(ps[1].white).toEqual(['d1'])
-    ps = movePoolPlayer(ps, 'd1', null)
-    expect(spotOf(ps, 'd1')).toBeNull()
-    expect(unplaced(ps, squad)).toEqual(squad)
+  it('moves a player between sides within one pool, leaving the other pools alone', () => {
+    let ps = movePoolPlayer(pools(), 'p1', 'd1', 'blue')
+    ps = movePoolPlayer(ps, 'p2', 'd1', 'white')
+    expect(sideOf(ps[0], 'd1')).toBe('blue')
+    expect(sideOf(ps[1], 'd1')).toBe('white')
+    ps = movePoolPlayer(ps, 'p1', 'd1', 'white')
+    expect(ps[0]).toMatchObject({ blue: [], white: ['d1'] })
+    ps = movePoolPlayer(ps, 'p1', 'd1', null)
+    expect(sideOf(ps[0], 'd1')).toBeNull()
+    expect(unplaced(ps[0], squad)).toEqual(squad)
+    expect(unplaced(ps[1], squad)).toEqual(squad.filter((id) => id !== 'd1'))
   })
 
-  it('drops players who left the camp and duplicates', () => {
-    const ps = [{ ...emptyPool('p1'), blue: ['d1', 'gone'], white: ['d1', 'd2'] }]
-    expect(prunePools(ps, squad)).toEqual([{ ...emptyPool('p1'), blue: ['d1'], white: ['d2'] }])
+  it('drops players who left the camp and duplicates within a pool', () => {
+    const ps = [
+      { ...emptyPool('p1'), blue: ['d1', 'gone'], white: ['d1', 'd2'] },
+      { ...emptyPool('p2'), blue: ['d1'] },
+    ]
+    expect(prunePools(ps, squad)).toEqual([
+      { ...emptyPool('p1'), blue: ['d1'], white: ['d2'] },
+      { ...emptyPool('p2'), blue: ['d1'], white: [] },
+    ])
   })
 
-  it('splits the rest evenly by position across pools and sides', () => {
+  it('splits every player in every pool, evenly by position', () => {
     const ps = splitEvenly(pools(), squad, byId)
-    expect(unplaced(ps, squad)).toEqual([])
-    for (const p of ps) for (const side of ['blue', 'white'] as const) {
-      expect(sideBalance(p[side], byId).total).toBeLessThanOrEqual(2)
-      expect(sideBalance(p[side], byId).GK).toBeLessThanOrEqual(1)
+    for (const p of ps) {
+      expect(unplaced(p, squad)).toEqual([])
+      expect(p.blue.length + p.white.length).toBe(squad.length)
+      for (const side of ['blue', 'white'] as const) {
+        expect(sideBalance(p[side], byId)).toMatchObject({ GK: 1, DEF: 1, ATT: 1, total: 3 })
+      }
     }
-    // Two keepers go to different sides.
-    expect(spotOf(ps, 'g1')).not.toEqual(spotOf(ps, 'g2'))
+  })
+
+  it('mixes the players differently from pool to pool, the same way every time', () => {
+    const many = new Map(Array.from({ length: 24 }, (_, i) => [`x${i}`, player(`x${i}`, { mainPosition: (['GK', 'DEF', 'ATT'] as const)[i % 3] })]))
+    const ids = [...many.keys()]
+    const ps = splitEvenly([emptyPool('a'), emptyPool('b')], ids, many)
+    const together = (p: CampPool) => p.blue.slice().sort().join()
+    expect(together(ps[0])).not.toEqual(together(ps[1]))
+    expect(splitEvenly([emptyPool('a')], ids, many)[0]).toEqual(ps[0])
   })
 
   it('sends a player where their position is needed most', () => {
-    const ps = [{ ...emptyPool('p1'), blue: ['g1', 'd1'], white: ['d2'] }]
-    expect(bestSpot(ps, { mainPosition: 'GK' }, byId)).toEqual({ pool: 'p1', side: 'white' })
-    expect(bestSpot(ps, { mainPosition: 'ATT' }, byId)).toEqual({ pool: 'p1', side: 'white' })
+    const p = { ...emptyPool('p1'), blue: ['g1', 'd1'], white: ['d2'] }
+    expect(bestSide(p, { mainPosition: 'GK' }, byId)).toBe('white')
+    expect(bestSide(p, { mainPosition: 'ATT' }, byId)).toBe('white')
+    expect(bestSide(emptyPool('p2'), { mainPosition: 'ATT' }, byId)).toBe('blue')
   })
 
   it('adds and removes pools', () => {
