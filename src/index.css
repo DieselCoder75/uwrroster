@@ -1423,8 +1423,9 @@ ul.tiles {
 .game-title {
   font-weight: 700;
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 4px 8px;
 }
 
 .status-pill {
@@ -1571,8 +1572,9 @@ ul.tiles {
 
 .game-heading {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 4px 10px;
 }
 
 .lineup-bar {
