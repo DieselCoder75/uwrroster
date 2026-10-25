@@ -84,13 +84,11 @@ export function TournamentPage() {
                       <strong>{g.time || '–'}</strong>
                       <span className="muted small">{formatDay(g.date, lang)}</span>
                     </span>
-                    <span className="grow">
-                      <span className="game-title">
-                        {g.cap && <span className={`cap-dot cap-${g.cap}`} title={t(`cap.${g.cap}`)} />}
-                        {gameTitle(g)}
-                      </span>
-                      {g.label && <span className="muted small"> · {g.label}</span>}
+                    <span className="game-title">
+                      {g.cap && <span className={`cap-dot cap-${g.cap}`} title={t(`cap.${g.cap}`)} />}
+                      {gameTitle(g)}
                     </span>
+                    {g.label && <span className="game-label muted small">{g.label}</span>}
                     <span className={`status-pill ${ready ? 'ok' : sum.inGame + sum.subs === 0 ? '' : 'partial'}`}>
                       {sum.inGame + sum.subs === 0
                         ? t('games.lineupEmpty')

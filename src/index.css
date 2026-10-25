@@ -1389,11 +1389,23 @@ ul.tiles {
   border-top: 1px solid var(--border);
 }
 
+/* Time and day on the left; the game's name, its label and the lineup status stacked to the right, all as wide. */
 .game-link {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr;
   align-items: center;
-  gap: 12px;
+  column-gap: 12px;
+  row-gap: 4px;
   padding: 12px 4px;
+}
+
+.game-link > :not(.game-when) {
+  grid-column: 2;
+}
+
+.game-link .status-pill {
+  justify-self: stretch;
+  margin-top: 2px;
 }
 
 .game-link:hover .game-title {
@@ -1404,6 +1416,8 @@ ul.tiles {
   display: flex;
   flex-direction: column;
   min-width: 64px;
+  grid-row: 1 / span 3;
+  align-self: start;
 }
 
 .game-title {
