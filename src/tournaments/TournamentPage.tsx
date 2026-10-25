@@ -7,7 +7,7 @@ import { POSITIONS, fullName } from '../players/model'
 import { usePlayers } from '../players/store'
 import { GameEditor } from './GameEditor'
 import { TournamentEditor } from './TournamentEditor'
-import { pruneLineup, squadNumberClashes, summarize, tournamentNumber, type Game } from './model'
+import { gameLineups, squadNumberClashes, summarize, tournamentNumber, type Game } from './model'
 import { useGames, useTournament } from './store'
 
 export function TournamentPage() {
@@ -73,7 +73,9 @@ export function TournamentPage() {
           {games.data.length === 0 && <p className="muted">{t('games.empty')}</p>}
           <ul className="list">
             {games.data.map((g) => {
-              const sum = summarize(pruneLineup(g.lineup, tour.squad))
+              const { first, second } = gameLineups(g, tour.squad)
+              const sum = summarize(first)
+              const ready = sum.complete && summarize(second).complete
               return (
                 <li key={g.id} className="game-row">
                   <Link to={`/tournaments/${tid}/games/${g.id}`} className="game-link">
@@ -88,12 +90,14 @@ export function TournamentPage() {
                       </span>
                       {g.label && <span className="muted small"> · {g.label}</span>}
                     </span>
-                    <span className={`status-pill ${sum.complete ? 'ok' : sum.inGame + sum.subs === 0 ? '' : 'partial'}`}>
+                    <span className={`status-pill ${ready ? 'ok' : sum.inGame + sum.subs === 0 ? '' : 'partial'}`}>
                       {sum.inGame + sum.subs === 0
                         ? t('games.lineupEmpty')
-                        : sum.complete
+                        : ready
                           ? `✓ ${t('games.lineupReady')}`
-                          : t('games.lineupStatus', { inGame: sum.inGame, subs: sum.subs })}
+                          : sum.complete
+                            ? t('games.period2Unfinished')
+                            : t('games.lineupStatus', { inGame: sum.inGame, subs: sum.subs })}
                     </span>
                   </Link>
                 </li>

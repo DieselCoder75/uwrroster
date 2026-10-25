@@ -35,7 +35,10 @@ export type Game = {
   cap: Cap | null
   /** Free text such as "Match 6" or "Semi-final". */
   label: string
+  /** Starting lineup: the game's 15 (12 in the game and 3 substitutes) for the first period. */
   lineup: Lineup
+  /** Second-period lineup, picked from the same 15. Null means the same as the first period. */
+  lineup2: Lineup | null
 }
 
 export type GameInput = Omit<Game, 'id'>
@@ -89,6 +92,41 @@ export const GAME_SUBS = 3
 
 export function slotLimit(slot: Slot): number {
   return slot === 'SUB' ? GAME_SUBS : PER_POSITION
+}
+
+/** At most 15 players can play in a game: the 12 who start and 3 substitutes. */
+export const GAME_SIZE = PER_POSITION * 3 + GAME_SUBS
+
+export type Period = 1 | 2
+export const PERIODS: Period[] = [1, 2]
+
+export function lineupIds(lineup: Lineup): string[] {
+  return SLOTS.flatMap((s) => lineup[s])
+}
+
+export function fieldIds(lineup: Lineup): string[] {
+  return [...lineup.GK, ...lineup.DEF, ...lineup.ATT]
+}
+
+/** Both periods' lineups with players outside the squad dropped. The second period only uses the starting 15. */
+export function gameLineups(game: Pick<Game, 'lineup' | 'lineup2'>, squad: string[]): { first: Lineup; second: Lineup; secondSame: boolean } {
+  const first = pruneLineup(game.lineup, squad)
+  if (!game.lineup2) return { first, second: first, secondSame: true }
+  return { first, second: pruneLineup(game.lineup2, lineupIds(first)), secondSame: false }
+}
+
+/** Players who start the second period in the water but didn't start the first: the substitutions made at the break. */
+export function substitutionsIn(first: Lineup, second: Lineup): string[] {
+  const starters = new Set(fieldIds(first))
+  return fieldIds(second).filter((id) => !starters.has(id))
+}
+
+/** Why a move would break the game's rules, or null when it is fine. */
+export function moveProblem(lineup: Lineup, playerId: string, to: Slot | null, period: Period, starting15: string[]): 'gameFull' | 'notInGame' | null {
+  if (to === null) return null
+  if (period === 2) return starting15.includes(playerId) ? null : 'notInGame'
+  const placed = lineupIds(lineup)
+  return !placed.includes(playerId) && placed.length >= GAME_SIZE ? 'gameFull' : null
 }
 
 export type LineupSummary = { inGame: number; subs: number; complete: boolean }

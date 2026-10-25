@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
 import { useI18n } from '../i18n'
+import { useOnline } from '../lib/online'
 import { Brand, Footer } from './Brand'
 import { LanguageSwitch } from './LanguageSwitch'
 
 export function Layout() {
   const { t } = useI18n()
   const auth = useAuth()
+  const online = useOnline()
   const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
@@ -51,6 +53,12 @@ export function Layout() {
         </nav>
       </header>
       <div className={`nav-backdrop ${menuOpen ? 'open' : ''}`} onClick={() => setMenuOpen(false)} />
+
+      {!online && (
+        <div className="offline-banner" role="status">
+          {t('net.offline')}
+        </div>
+      )}
 
       <main className="content">
         <Outlet />

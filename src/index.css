@@ -1921,3 +1921,50 @@ ul.tiles {
 .issue-icon {
   flex: none;
 }
+
+/* Periods and substitutions on the lineup page. */
+.period-tabs {
+  max-width: 360px;
+}
+
+/* Empty places in a position, so any player can be dropped in before the zone has anyone. */
+.seat {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  font-size: 0.8rem;
+  color: var(--muted-2);
+  border: 1px dashed color-mix(in srgb, var(--pos, var(--muted)) 45%, transparent);
+}
+
+.seat.armed {
+  color: var(--primary);
+  border: 2px dashed color-mix(in srgb, var(--primary) 50%, transparent);
+}
+
+.sub-note {
+  flex: none;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border: 1px solid currentColor;
+}
+
+.sub-in {
+  color: #4fe3a0;
+}
+
+.sub-out {
+  color: var(--danger);
+}
+
+.offline-banner {
+  position: sticky;
+  top: var(--header-h);
+  z-index: 50;
+  padding: 8px var(--gutter);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--primary-text);
+  background: #f2c14e;
+}

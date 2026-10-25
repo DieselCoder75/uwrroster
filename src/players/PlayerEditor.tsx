@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useI18n } from '../i18n'
 import { POSITIONS, fullName, normalizePlayer, validatePlayer, type CaptainRole, type Player, type PlayerInput, type Position } from './model'
+import { whenSaved } from '../lib/online'
 import { deletePlayer, savePlayer } from './store'
 
 const EMPTY: PlayerInput = {
@@ -55,7 +56,7 @@ export function PlayerEditor({ player, onClose }: Props) {
     setBusy(true)
     setError(null)
     try {
-      await savePlayer(player?.id ?? null, input)
+      await whenSaved(savePlayer(player?.id ?? null, input))
       onClose()
     } catch (err) {
       setError(t('app.error', { message: (err as Error).message }))
@@ -67,7 +68,7 @@ export function PlayerEditor({ player, onClose }: Props) {
     if (!player || !window.confirm(t('player.deleteConfirm', { name: fullName(player) }))) return
     setBusy(true)
     try {
-      await deletePlayer(player.id)
+      await whenSaved(deletePlayer(player.id))
       onClose()
     } catch (err) {
       setError(t('app.error', { message: (err as Error).message }))
