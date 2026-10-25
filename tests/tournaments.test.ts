@@ -8,6 +8,8 @@ import {
   movePlayer,
   pruneLineup,
   substitutionsIn,
+  tournamentLoad,
+  plannedPeriods,
   slotLimit,
   slotOf,
   sortGames,
@@ -125,6 +127,25 @@ describe('periods and substitutions', () => {
   })
 })
 
+describe('playing load', () => {
+  const four = (p: string) => [1, 2, 3, 4].map((i) => p + i)
+  const squad = [...four('g'), ...four('d'), ...four('a'), 's1', 's2', 's3', 'x']
+  const first = lineup({ GK: four('g'), DEF: four('d'), ATT: four('a'), SUB: ['s1', 's2', 's3'] })
+  const game = (id: string, l: Lineup, l2: Lineup | null) => ({ id, lineup: l, lineup2: l2 }) as Game
+
+  it('counts periods in the water, not on the bench', () => {
+    const second = lineup({ ...first, GK: ['s1', 'g2', 'g3', 'g4'], SUB: ['g1', 's2', 's3'] })
+    const games = [game('A', first, second), game('B', first, null), game('C', lineup({}), null)]
+    const load = tournamentLoad(games, squad)
+    expect(load.get('g1')?.periods).toBe(3)
+    expect(load.get('s1')?.periods).toBe(1)
+    expect(load.get('s2')?.periods).toBe(0)
+    expect(load.get('x')?.byGame.A).toEqual([null, null])
+    expect(load.get('g1')?.byGame.A).toEqual(['GK', 'SUB'])
+    expect(plannedPeriods(games, squad)).toBe(4)
+  })
+})
+
 describe('tournament numbers', () => {
   const players = [player('kuura', { number: 3 }), player('kira', { number: 3 }), player('heli', { number: 6 })]
 
@@ -149,5 +170,17 @@ describe('game order', () => {
     const g = (id: string, date: string, time: string) => ({ id, date, time }) as Game
     const sorted = sortGames([g('d2', '2027-02-28', '13:00'), g('late', '2027-02-27', '17:30'), g('early', '2027-02-27', '10:00')])
     expect(sorted.map((x) => x.id)).toEqual(['early', 'late', 'd2'])
+  })
+
+  it('puts the latest added last when the time is missing or the same', () => {
+    const g = (id: string, date: string, time: string, createdAt: number) => ({ id, date, time, createdAt }) as Game
+    const sorted = sortGames([
+      g('sameLater', '2027-02-27', '10:00', 5),
+      g('noTimeOld', '2027-02-27', '', 1),
+      g('sameEarlier', '2027-02-27', '10:00', 2),
+      g('noDate', '', '', 0),
+      g('noTimeNew', '2027-02-27', '', 9),
+    ])
+    expect(sorted.map((x) => x.id)).toEqual(['sameEarlier', 'sameLater', 'noTimeOld', 'noTimeNew', 'noDate'])
   })
 })

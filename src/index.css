@@ -1898,3 +1898,118 @@ ul.tiles {
   color: var(--primary);
   font-size: 1.3rem;
 }
+
+/* Playing load: periods each player plays across the tournament. */
+.load-scroll {
+  overflow-x: auto;
+  margin: 0 -4px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.load-table {
+  border-collapse: collapse;
+  min-width: 100%;
+  font-size: 0.9rem;
+}
+
+.load-table th,
+.load-table td {
+  padding: 5px 6px;
+  text-align: center;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+
+.load-table thead th {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted-2);
+  vertical-align: bottom;
+}
+
+.load-game-day,
+.load-game-time {
+  display: block;
+}
+
+.load-game-time {
+  color: var(--text);
+}
+
+.load-table .load-player {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  text-align: left;
+  font-weight: 500;
+  background: var(--surface);
+}
+
+.load-player-in {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.load-name {
+  max-width: 11em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.load-cell {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.load-box {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 22px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  vertical-align: middle;
+  color: var(--pos-bg, var(--bg));
+  background: var(--pos, transparent);
+}
+
+.load-box.bench {
+  border: 1.5px solid var(--muted-2);
+}
+
+.load-box.out {
+  border: 1px dashed var(--border);
+}
+
+.load-total {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+
+.load-total.high {
+  color: var(--danger);
+}
+
+.load-total.low {
+  color: #f2c14e;
+}
+
+.load-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+
+.load-legend {
+  gap: 6px 16px;
+}
+
+.load-pill {
+  flex: none;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--muted-2);
+  white-space: nowrap;
+}

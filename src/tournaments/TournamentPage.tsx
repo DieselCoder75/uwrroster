@@ -6,6 +6,7 @@ import { formatDay, formatRange } from '../lib/dates'
 import { POSITIONS, fullName } from '../players/model'
 import { usePlayers } from '../players/store'
 import { GameEditor } from './GameEditor'
+import { LoadTable } from './LoadTable'
 import { TournamentEditor } from './TournamentEditor'
 import { gameLineups, squadNumberClashes, summarize, tournamentNumber, type Game } from './model'
 import { useGames, useTournament } from './store'
@@ -156,6 +157,8 @@ export function TournamentPage() {
           )}
         </section>
       </div>
+
+      <LoadTable tour={tour} games={games.data} players={players.players} />
 
       {editing && (
         <TournamentEditor tournament={tour} onClose={() => setEditing(false)} onDeleted={() => navigate('/tournaments')} />
