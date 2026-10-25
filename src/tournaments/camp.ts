@@ -25,34 +25,38 @@ export const newPoolId = () => Math.random().toString(36).slice(2, 10)
 
 export const emptyPool = (id = newPoolId()): CampPool => ({ id, name: '', blue: [], white: [] })
 
-/** Pools with players outside the camp dropped, and each player in one place only (the first one found). */
+/** Pools with players outside the camp dropped, and each player on one side only within a pool. */
 export function prunePools(pools: CampPool[], squad: string[]): CampPool[] {
   const keep = new Set(squad)
-  const seen = new Set<string>()
-  const take = (ids: string[]) =>
-    ids.filter((id) => {
-      if (!keep.has(id) || seen.has(id)) return false
-      seen.add(id)
-      return true
-    })
-  return pools.map((p) => ({ ...p, blue: take(p.blue), white: take(p.white) }))
-}
-
-export function spotOf(pools: CampPool[], playerId: string): PoolSpot | null {
-  for (const p of pools) for (const side of SIDES) if (p[side].includes(playerId)) return { pool: p.id, side }
-  return null
-}
-
-/** Players not yet in any pool, in the camp's order. */
-export function unplaced(pools: CampPool[], squad: string[]): string[] {
-  return squad.filter((id) => spotOf(pools, id) === null)
-}
-
-/** Moves a player to a pool side, or out of the pools with null. Does not change the input. */
-export function movePoolPlayer(pools: CampPool[], playerId: string, to: PoolSpot | null): CampPool[] {
   return pools.map((p) => {
+    const seen = new Set<string>()
+    const take = (ids: string[]) =>
+      ids.filter((id) => {
+        if (!keep.has(id) || seen.has(id)) return false
+        seen.add(id)
+        return true
+      })
+    return { ...p, blue: take(p.blue), white: take(p.white) }
+  })
+}
+
+/** Every camp player plays in every pool: this is their side in one pool, or null while not split there. */
+export function sideOf(pool: CampPool, playerId: string): Side | null {
+  if (pool.blue.includes(playerId)) return 'blue'
+  return pool.white.includes(playerId) ? 'white' : null
+}
+
+/** Players not yet on a side in this pool, in the camp's order. */
+export function unplaced(pool: CampPool, squad: string[]): string[] {
+  return squad.filter((id) => sideOf(pool, id) === null)
+}
+
+/** Moves a player to a side in one pool, or off both sides with null. Other pools and the input are unchanged. */
+export function movePoolPlayer(pools: CampPool[], poolId: string, playerId: string, side: Side | null): CampPool[] {
+  return pools.map((p) => {
+    if (p.id !== poolId) return p
     const next = { ...p, blue: p.blue.filter((id) => id !== playerId), white: p.white.filter((id) => id !== playerId) }
-    if (to && to.pool === p.id) next[to.side] = [...next[to.side], playerId]
+    if (side) next[side] = [...next[side], playerId]
     return next
   })
 }
@@ -87,30 +91,49 @@ export function sortSide<T extends Pick<Player, 'id' | 'mainPosition' | 'number'
   return [...players].sort((a, b) => order(a) - order(b) || (a.number ?? 999) - (b.number ?? 999))
 }
 
-/** The side that needs this player most: fewest of their main position, then fewest players. Pools are tried in order. */
-export function bestSpot(pools: CampPool[], player: Pick<Player, 'mainPosition'>, byId: Map<string, Pick<Player, 'mainPosition'>>): PoolSpot | null {
-  let best: { spot: PoolSpot; pos: number; total: number } | null = null
-  for (const p of pools) {
-    for (const side of SIDES) {
-      const b = sideBalance(p[side], byId)
-      const pos = b[player.mainPosition]
-      if (!best || pos < best.pos || (pos === best.pos && b.total < best.total)) {
-        best = { spot: { pool: p.id, side }, pos, total: b.total }
-      }
-    }
-  }
-  return best?.spot ?? null
+/** The side of a pool that needs this player most: fewest of their main position, then fewest players. */
+export function bestSide(pool: CampPool, player: Pick<Player, 'mainPosition'>, byId: Map<string, Pick<Player, 'mainPosition'>>): Side {
+  const b = { blue: sideBalance(pool.blue, byId), white: sideBalance(pool.white, byId) }
+  const need = (side: Side) => [b[side][player.mainPosition], b[side].total]
+  const [bp, bt] = need('blue')
+  const [wp, wt] = need('white')
+  return wp < bp || (wp === bp && wt < bt) ? 'white' : 'blue'
 }
 
-/** Places every player not yet in a pool, evenly by main position across all pools and sides. */
-export function splitEvenly(pools: CampPool[], squad: string[], byId: Map<string, Pick<Player, 'mainPosition'>>): CampPool[] {
-  const rest = unplaced(pools, squad).filter((id) => byId.has(id))
-  // Goal keepers first: there are the fewest of them, so they spread most evenly.
-  rest.sort((a, b) => POSITIONS.indexOf(byId.get(a)!.mainPosition) - POSITIONS.indexOf(byId.get(b)!.mainPosition))
-  let next = pools
-  for (const id of rest) {
-    const spot = bestSpot(next, byId.get(id)!, byId)
-    if (spot) next = movePoolPlayer(next, id, spot)
+/** A repeatable shuffle, so each pool mixes the players differently but the same pool always the same way. */
+function seededShuffle<T>(items: T[], seed: string): T[] {
+  let h = 2166136261
+  for (const c of seed) h = Math.imul(h ^ c.charCodeAt(0), 16777619)
+  const rand = () => {
+    h = Math.imul(h ^ (h >>> 15), 2246822507)
+    h = Math.imul(h ^ (h >>> 13), 3266489909)
+    return ((h ^= h >>> 16) >>> 0) / 4294967296
   }
-  return next
+  const out = [...items]
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1))
+    ;[out[i], out[j]] = [out[j], out[i]]
+  }
+  return out
+}
+
+/**
+ * Splits the players not yet on a side in each pool, evenly by main position. Each pool mixes the players
+ * differently, so players get different teammates from pool to pool.
+ */
+export function splitEvenly(pools: CampPool[], squad: string[], byId: Map<string, Pick<Player, 'mainPosition'>>): CampPool[] {
+  return pools.map((pool) => {
+    const rest = seededShuffle(
+      unplaced(pool, squad).filter((id) => byId.has(id)),
+      pool.id,
+    )
+    // Goal keepers first: there are the fewest of them, so they spread most evenly.
+    rest.sort((a, b) => POSITIONS.indexOf(byId.get(a)!.mainPosition) - POSITIONS.indexOf(byId.get(b)!.mainPosition))
+    let next = pool
+    for (const id of rest) {
+      const side = bestSide(next, byId.get(id)!, byId)
+      next = { ...next, [side]: [...next[side], id] }
+    }
+    return next
+  })
 }

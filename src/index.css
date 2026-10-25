@@ -808,6 +808,27 @@ fieldset.field legend {
   max-width: 75%;
 }
 
+.tile-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.tile-top .bar {
+  margin-bottom: 0;
+}
+
+.tile-top .kind-tag {
+  margin-right: 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
 .tile-num {
   position: absolute;
   right: 12px;
@@ -2083,28 +2104,9 @@ ul.tiles {
   background: var(--primary);
 }
 
-.camp-layout {
-  display: grid;
-  gap: 12px;
-  align-items: start;
-}
-
 .pools {
   display: grid;
   gap: 12px;
-}
-
-@media (min-width: 900px) {
-  .camp-layout {
-    grid-template-columns: minmax(240px, 1fr) 2.4fr;
-  }
-
-  .camp-rest {
-    position: sticky;
-    top: calc(var(--header-h) + 76px);
-    max-height: calc(100vh - var(--header-h) - 96px);
-    overflow-y: auto;
-  }
 }
 
 @media (min-width: 1400px) {
@@ -2132,6 +2134,11 @@ ul.tiles {
 .pool-score {
   font-family: var(--font-display);
   font-size: 1.05rem;
+}
+
+.zone.pool-rest {
+  margin-bottom: 8px;
+  padding: 8px;
 }
 
 .pool-sides {

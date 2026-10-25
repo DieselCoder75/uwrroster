@@ -158,8 +158,9 @@ export function SquadPage() {
       />
 
       <div className="lineup-bar">
-        <strong className={squad.length > tour.squadSize ? 'warn' : squad.length === tour.squadSize ? 'ok-text' : ''}>
-          {t('squad.selected', { count: squad.length })} / {tour.squadSize}
+        <strong className={camp ? '' : squad.length > tour.squadSize ? 'warn' : squad.length === tour.squadSize ? 'ok-text' : ''}>
+          {t('squad.selected', { count: squad.length })}
+          {!camp && ` / ${tour.squadSize}`}
         </strong>
         <SaveStatus pending={pending} />
         <span className="grow" />
@@ -199,7 +200,7 @@ export function SquadPage() {
             zone={SQUAD}
             title={t(camp ? 'camp.participants' : 'squad.title')}
             count={squad.length}
-            limit={tour.squadSize}
+            limit={camp ? undefined : tour.squadSize}
             armed={!!selected && !selectedInSquad}
             onTap={() => onZoneTap(SQUAD)}
           >
