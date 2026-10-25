@@ -15,7 +15,7 @@ export const fi = {
   'nav.menu': 'Avaa valikko',
   'footer.site': 'Uppopallonaiset.fi',
   'hero.tag': 'Suomen naisten uppopallomaajoukkue',
-  'home.tag': 'Valmentajille',
+  'home.tag': 'Naisten uppopallomaajoukkue',
   'home.upcoming': 'Tulevat turnaukset',
   'home.allTournaments': 'Kaikki turnaukset',
   'home.noUpcoming': 'Ei tulevia turnauksia.',

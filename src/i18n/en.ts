@@ -17,7 +17,7 @@ export const en: Messages = {
   'nav.menu': 'Open menu',
   'footer.site': 'Uppopallonaiset.fi',
   'hero.tag': "Finland women's underwater rugby team",
-  'home.tag': 'For coaches',
+  'home.tag': "Women's national underwater rugby team",
   'home.upcoming': 'Upcoming tournaments',
   'home.allTournaments': 'All tournaments',
   'home.noUpcoming': 'No upcoming tournaments.',
