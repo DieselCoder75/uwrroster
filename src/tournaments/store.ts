@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore'
 import { useEffect, useState } from 'react'
 import { db } from '../firebase'
+import { todayIso } from '../lib/dates'
 import {
   DEFAULT_SQUAD_SIZE,
   SLOTS,
@@ -87,7 +88,7 @@ export function useTournaments(): Loadable<Tournament[]> {
     (set) =>
       onSnapshot(
         tournamentsCol,
-        (snap) => set({ status: 'ready', data: sortTournaments(snap.docs.map((d) => tournamentFromDoc(d.id, d.data()))) }),
+        (snap) => set({ status: 'ready', data: sortTournaments(snap.docs.map((d) => tournamentFromDoc(d.id, d.data())), todayIso()) }),
         (e) => set({ status: 'error', message: e.message }),
       ),
     [],

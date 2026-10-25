@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { PageHero } from '../components/PageHero'
 import { useI18n } from '../i18n'
-import { formatRange } from '../lib/dates'
+import { daysUntil, formatRange, todayIso } from '../lib/dates'
 import { TournamentEditor } from './TournamentEditor'
 import { useTournaments } from './store'
 
@@ -10,6 +10,9 @@ export function TournamentsPage() {
   const { t, lang } = useI18n()
   const state = useTournaments()
   const navigate = useNavigate()
+  const today = todayIso()
+  // Days until the tournament starts; nothing for ongoing and past ones.
+  const days = (tour: { startDate: string }) => (tour.startDate ? daysUntil(tour.startDate, today) : 0)
   const [adding, setAdding] = useState(false)
 
   if (state.status === 'loading') return <p className="muted">{t('app.loading')}</p>
@@ -36,9 +39,11 @@ export function TournamentsPage() {
         {state.data.map((tour) => (
           <li key={tour.id}>
             <Link to={`/tournaments/${tour.id}`} className="tile card tour-tile">
-              <span className="outline-num tile-num" aria-hidden="true">
-                {tour.squadSize}
-              </span>
+              {days(tour) > 0 && (
+                <span className="outline-num tile-num" title={t('tournaments.daysTo', { count: days(tour) })}>
+                  {days(tour)}
+                </span>
+              )}
               <span className="bar" />
               <span className="eyebrow">{formatRange(tour.startDate, tour.endDate, lang)}</span>
               <h2>{tour.name}</h2>

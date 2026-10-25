@@ -242,4 +242,5 @@ export const en: Messages = {
   'load.low': 'Plays clearly less than average',
   'load.chip': '{count} per.',
   'load.chipTitle': "Periods played in the tournament's other games: {count}",
+  'tournaments.daysTo': '{count} days until the tournament',
 }

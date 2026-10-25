@@ -240,4 +240,5 @@ export const fi = {
   'load.low': 'Pelaa selvästi keskimääräistä vähemmän',
   'load.chip': '{count} erää',
   'load.chipTitle': 'Pelattuja eriä turnauksen muissa peleissä: {count}',
+  'tournaments.daysTo': '{count} päivää turnauksen alkuun',
 } as const
