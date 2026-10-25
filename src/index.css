@@ -2073,3 +2073,137 @@ ul.tiles {
   gap: 8px;
   flex-wrap: wrap;
 }
+
+/* Camps: players split into pools, and each pool into two sides shown side by side, also on phones. */
+.kind-tag {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 0 6px;
+  color: var(--primary-text);
+  background: var(--primary);
+}
+
+.camp-layout {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+}
+
+.pools {
+  display: grid;
+  gap: 12px;
+}
+
+@media (min-width: 900px) {
+  .camp-layout {
+    grid-template-columns: minmax(240px, 1fr) 2.4fr;
+  }
+
+  .camp-rest {
+    position: sticky;
+    top: calc(var(--header-h) + 76px);
+    max-height: calc(100vh - var(--header-h) - 96px);
+    overflow-y: auto;
+  }
+}
+
+@media (min-width: 1400px) {
+  .pools {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.pool-card {
+  padding: 10px;
+  border-top: 3px solid var(--primary);
+}
+
+.pool-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.pool-head h2 {
+  font-size: 1.05rem;
+}
+
+.pool-score {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+
+.pool-sides {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.zone.side {
+  min-width: 0;
+  padding: 8px;
+}
+
+.zone.side-blue {
+  border-top-color: #2f6fe0;
+  background: color-mix(in srgb, #12306b 35%, var(--surface));
+}
+
+.zone.side-white {
+  border-top-color: #e8eef3;
+  background: color-mix(in srgb, #ffffff 6%, var(--surface));
+}
+
+.zone.side .zone-head {
+  margin-bottom: 6px;
+}
+
+.zone.side .zone-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+.balance {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 0.75rem;
+}
+
+.balance-pos {
+  flex: 1;
+  min-width: 0;
+  padding: 1px 4px;
+  text-align: center;
+  white-space: nowrap;
+  color: var(--pos);
+  border: 1px solid color-mix(in srgb, var(--pos) 40%, transparent);
+}
+
+.balance-pos.uneven {
+  color: var(--primary-text);
+  background: var(--pos);
+}
+
+.chip-body.compact {
+  gap: 6px;
+  min-height: 40px;
+  padding: 4px 6px 4px 4px;
+  font-size: 0.9rem;
+}
+
+.chip-body.compact .mini-num {
+  min-width: 26px;
+  height: 26px;
+}
+
+.chip-body.compact .badge {
+  display: none;
+}
+
+.add-pool {
+  justify-self: start;
+}

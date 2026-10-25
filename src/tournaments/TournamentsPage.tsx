@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { EventKind } from './model'
 import { Link, useNavigate } from 'react-router-dom'
 import { PageHero } from '../components/PageHero'
 import { useI18n } from '../i18n'
@@ -13,7 +14,7 @@ export function TournamentsPage() {
   const today = todayIso()
   // Days until the tournament starts; nothing for ongoing and past ones.
   const days = (tour: { startDate: string }) => (tour.startDate ? daysUntil(tour.startDate, today) : 0)
-  const [adding, setAdding] = useState(false)
+  const [adding, setAdding] = useState<EventKind | null>(null)
 
   if (state.status === 'loading') return <p className="muted">{t('app.loading')}</p>
   if (state.status === 'error') return <p className="error">{t('app.error', { message: state.message })}</p>
@@ -27,9 +28,14 @@ export function TournamentsPage() {
         count={state.data.length}
         countLabel={t('tournaments.countLabel')}
         actions={
-          <button className="btn btn-primary" onClick={() => setAdding(true)}>
-            + {t('tournaments.add')}
-          </button>
+          <>
+            <button className="btn btn-primary" onClick={() => setAdding('tournament')}>
+              + {t('tournaments.add')}
+            </button>
+            <button className="btn" onClick={() => setAdding('camp')}>
+              + {t('camp.add')}
+            </button>
+          </>
         }
       />
 
@@ -45,10 +51,13 @@ export function TournamentsPage() {
                 </span>
               )}
               <span className="bar" />
-              <span className="eyebrow">{formatRange(tour.startDate, tour.endDate, lang)}</span>
+              <span className="eyebrow">
+                {tour.kind === 'camp' && <span className="kind-tag">{t('event.kind.camp')}</span>}
+                {formatRange(tour.startDate, tour.endDate, lang)}
+              </span>
               <h2>{tour.name}</h2>
               {tour.location && <p className="muted">{tour.location}</p>}
-              <p className="small">{t('tournaments.squadCount', { count: tour.squad.length, size: tour.squadSize })}</p>
+              <p className="small">{t(tour.kind === 'camp' ? 'camp.count' : 'tournaments.squadCount', { count: tour.squad.length, size: tour.squadSize })}</p>
             </Link>
           </li>
         ))}
@@ -57,7 +66,8 @@ export function TournamentsPage() {
       {adding && (
         <TournamentEditor
           tournament={null}
-          onClose={() => setAdding(false)}
+          defaultKind={adding}
+          onClose={() => setAdding(null)}
           onSaved={(id) => navigate(`/tournaments/${id}`)}
         />
       )}

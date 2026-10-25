@@ -34,17 +34,18 @@ export function useDragSensors() {
 
 type ZoneProps = {
   zone: string
-  title: string
+  title: React.ReactNode
   count: number
   limit?: number
   armed: boolean
   /** Show empty places up to the limit, so any player can be dropped into any position from the start. */
   seats?: boolean
+  className?: string
   onTap: () => void
   children: React.ReactNode
 }
 
-export function ZoneBox({ zone, title, count, limit, armed, seats, onTap, children }: ZoneProps) {
+export function ZoneBox({ zone, title, count, limit, armed, seats, className = `zone-${zone}`, onTap, children }: ZoneProps) {
   const { t } = useI18n()
   const { setNodeRef, isOver } = useDroppable({ id: zone })
   const over = limit !== undefined && count > limit
@@ -52,7 +53,7 @@ export function ZoneBox({ zone, title, count, limit, armed, seats, onTap, childr
   return (
     <section
       ref={setNodeRef}
-      className={`zone card ${posClass} zone-${zone} ${isOver ? 'is-over' : ''} ${armed ? 'armed' : ''}`}
+      className={`zone card ${posClass} ${className} ${isOver ? 'is-over' : ''} ${armed ? 'armed' : ''}`}
       onClick={(e) => {
         // Taps on a chip select the chip; taps on the zone itself place the selected player.
         if (!(e.target as HTMLElement).closest('.chip-player, input, button')) onTap()
@@ -88,12 +89,15 @@ export function PlayerChip({
   clash,
   note,
   load,
+  compact,
   onTap,
   onDoubleTap,
 }: {
   player: Player
   slot: Slot | null
   selected: boolean
+  /** Number and name only, for narrow columns. */
+  compact?: boolean
   clash?: boolean
   /** Short marker such as "In" for a substitution. */
   note?: { text: string; kind: 'in' | 'out' }
@@ -127,7 +131,7 @@ export function PlayerChip({
       {...attributes}
       {...listeners}
     >
-      <ChipBody player={player} slot={slot} clash={clash} note={note} load={load} />
+      <ChipBody player={player} slot={slot} clash={clash} note={note} load={load} compact={compact} />
     </button>
   )
 }
@@ -139,9 +143,11 @@ export function ChipBody({
   clash,
   note,
   load,
+  compact,
 }: {
   player: Player
   slot: Slot | null
+  compact?: boolean
   lifted?: boolean
   clash?: boolean
   note?: { text: string; kind: 'in' | 'out' }
@@ -150,7 +156,7 @@ export function ChipBody({
   const { t } = useI18n()
   const issue = slot ? fitIssue(p, slot) : null
   return (
-    <span className={`chip-body ${lifted ? 'lifted' : ''} ${issue ? `issue-${issue}` : ''}`}>
+    <span className={`chip-body ${compact ? 'compact' : ''} ${lifted ? 'lifted' : ''} ${issue ? `issue-${issue}` : ''}`}>
       <span className={`mini-num pos-${p.mainPosition} ${clash ? 'clash' : ''}`}>{p.number ?? '–'}</span>
       <span className="chip-name">{fullName(p)}</span>
       {p.captain && <span className="badge">{t(`captain.short.${p.captain}`)}</span>}
@@ -160,7 +166,7 @@ export function ChipBody({
           {t('load.chip', { count: load })}
         </span>
       )}
-      {slot === null && (
+      {slot === null && !compact && (
         <span className="chip-pos">
           {playablePositions(p).map((pos) => (
             <span key={pos} className={`pos-tag pos-${pos} ${pos === p.mainPosition ? 'main' : ''}`} title={t(`pos.${pos}`)}>
