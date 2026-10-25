@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { PageHero } from '../components/PageHero'
 import { useI18n } from '../i18n'
 import { formatRange } from '../lib/dates'
 import { TournamentEditor } from './TournamentEditor'
@@ -16,23 +17,32 @@ export function TournamentsPage() {
 
   return (
     <div className="stack">
-      <div className="page-head">
-        <h1>{t('tournaments.title')}</h1>
-        <button className="btn btn-primary" onClick={() => setAdding(true)}>
-          + {t('tournaments.add')}
-        </button>
-      </div>
+      <PageHero
+        image="em-pronssimitalistit"
+        tag={t('tournaments.tag')}
+        title={t('tournaments.title')}
+        count={state.data.length}
+        countLabel={t('tournaments.countLabel')}
+        actions={
+          <button className="btn btn-primary" onClick={() => setAdding(true)}>
+            + {t('tournaments.add')}
+          </button>
+        }
+      />
 
       {state.data.length === 0 && <p className="muted">{t('tournaments.empty')}</p>}
 
       <ul className="tiles">
         {state.data.map((tour) => (
           <li key={tour.id}>
-            <Link to={`/tournaments/${tour.id}`} className="tile card">
+            <Link to={`/tournaments/${tour.id}`} className="tile card tour-tile">
+              <span className="outline-num tile-num" aria-hidden="true">
+                {tour.squadSize}
+              </span>
+              <span className="bar" />
+              <span className="eyebrow">{formatRange(tour.startDate, tour.endDate, lang)}</span>
               <h2>{tour.name}</h2>
-              <p className="muted">
-                {[formatRange(tour.startDate, tour.endDate, lang), tour.location].filter(Boolean).join(' · ')}
-              </p>
+              {tour.location && <p className="muted">{tour.location}</p>}
               <p className="small">{t('tournaments.squadCount', { count: tour.squad.length, size: tour.squadSize })}</p>
             </Link>
           </li>
