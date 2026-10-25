@@ -2,6 +2,7 @@ import { collection, deleteDoc, doc, getDoc, onSnapshot, orderBy, query, serverT
 import { useEffect, useState, type FormEvent } from 'react'
 import { useAuth, type Role } from '../auth/AuthProvider'
 import { sendLink } from '../auth/signInLink'
+import { PageHero } from '../components/PageHero'
 import { db } from '../firebase'
 import { useI18n } from '../i18n'
 import { isValidEmail, normalizeEmail } from '../lib/email'
@@ -76,7 +77,13 @@ export function CoachesPage() {
 
   return (
     <div className="stack">
-      <h1>{t('coaches.title')}</h1>
+      <PageHero
+        image="naisten-joukkue-altaalla"
+        tag={t('coaches.tag')}
+        title={t('coaches.title')}
+        count={coaches.length}
+        countLabel={t('coaches.countLabel')}
+      />
 
       {isAdmin ? (
         <form onSubmit={onInvite} className="card stack">

@@ -1,7 +1,10 @@
 import { useState } from 'react'
+import { PageHero } from '../components/PageHero'
+import { SearchBox } from '../components/SearchBox'
 import { useI18n } from '../i18n'
-import { POSITIONS, fullName, matchesSearch, type Player, type Position } from './model'
+import { POSITIONS, matchesSearch, type Player, type Position } from './model'
 import { PlayerEditor } from './PlayerEditor'
+import { playerPhoto } from './photos'
 import { importRoster, missingFromPool, usePlayers } from './store'
 import { WEBSITE_ROSTER } from './websiteRoster'
 
@@ -55,15 +58,19 @@ export function PlayersPage() {
 
   return (
     <div className="stack">
-      <div className="page-head">
-        <div>
-          <h1>{t('players.title')}</h1>
-          <p className="muted">{t('players.count', { count: active.length })}</p>
-        </div>
-        <button className="btn btn-primary" onClick={() => setEditing('new')}>
-          + {t('players.add')}
-        </button>
-      </div>
+      <PageHero
+        image="pelaajat"
+        focus="center 40%"
+        tag={t('players.tag')}
+        title={t('players.title')}
+        count={active.length}
+        countLabel={t('players.inPool')}
+        actions={
+          <button className="btn btn-primary" onClick={() => setEditing('new')}>
+            + {t('players.add')}
+          </button>
+        }
+      />
 
       {missing.length > 0 && (
         <div className="card stack">
@@ -84,14 +91,9 @@ export function PlayersPage() {
 
       {players.length > 0 && (
         <>
-          <input
-            type="search"
-            className="search"
-            placeholder={t('players.search')}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <div className="chips scroll-x" role="group">
+          <div className="tools">
+            <SearchBox value={query} onChange={setQuery} placeholder={t('players.search')} />
+            <div className="chips scroll-x" role="group">
             {filters.map((f) => (
               <button
                 key={f}
@@ -102,6 +104,7 @@ export function PlayersPage() {
                 {filterLabel(f)} <span className="chip-count">{filterCount(f)}</span>
               </button>
             ))}
+            </div>
           </div>
 
           {shown.length === 0 ? (
@@ -127,24 +130,25 @@ export function PlayersPage() {
 
 function PlayerCard({ player: p, onClick }: { player: Player; onClick: () => void }) {
   const { t } = useI18n()
+  const photo = playerPhoto(p)
   return (
-    <button className={`player-card card ${p.active ? '' : 'inactive'}`} onClick={onClick}>
-      <span className={`player-num pos-${p.mainPosition}`}>{p.number ?? '–'}</span>
+    <button className={`player-card pos-${p.mainPosition} ${p.active ? '' : 'inactive'}`} onClick={onClick}>
+      {photo && <span className="player-photo" style={{ backgroundImage: `url(${photo})` }} />}
+      <span className="player-big-num" aria-hidden="true">
+        {p.number ?? ''}
+      </span>
       <span className="player-main">
+        <span className="bar" />
+        <span className="player-num">#{p.number ?? '–'}</span>
         <span className="player-name">
-          {fullName(p)}
-          {p.captain && (
-            <span className="badge" title={t(`captain.${p.captain}`)}>
-              {t(`captain.short.${p.captain}`)}
-            </span>
-          )}
+          {p.firstName}
+          <br />
+          {p.lastName}
         </span>
         <span className="player-pos">
-          <span className={`pos-tag pos-${p.mainPosition} main`}>{t(`pos.${p.mainPosition}`)}</span>
+          <span className="pos-label">{t(`pos.${p.mainPosition}`)}</span>
           {p.locked ? (
-            <span className="muted small" title={t('players.locked')}>
-              🔒
-            </span>
+            <span title={t('players.locked')}>🔒</span>
           ) : (
             p.otherPositions.map((pos) => (
               <span key={pos} className={`pos-tag pos-${pos}`} title={t(`pos.${pos}`)}>
@@ -152,8 +156,9 @@ function PlayerCard({ player: p, onClick }: { player: Player; onClick: () => voi
               </span>
             ))
           )}
-          {!p.active && <span className="muted small">{t('players.inactive')}</span>}
         </span>
+        {p.captain && <span className="player-capt">{t(`captain.${p.captain}`)}</span>}
+        {!p.active && <span className="muted small">{t('players.inactive')}</span>}
       </span>
     </button>
   )

@@ -1,6 +1,7 @@
 import { DndContext, DragOverlay, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { PageHero } from '../components/PageHero'
 import { useI18n } from '../i18n'
 import { formatDay } from '../lib/dates'
 import { fullName } from '../players/model'
@@ -115,11 +116,25 @@ export function LineupPage() {
 
   return (
     <div className="stack">
-      <div className="game-nav">
-        <Link to={`/tournaments/${tid}`} className="back-link">
-          ← {tour.name}
-        </Link>
-        <span className="game-nav-arrows">
+      <PageHero
+        compact
+        image="pohjassaseisomassa"
+        top={
+          <Link to={`/tournaments/${tid}`} className="back-link">
+            ← {tour.name}
+          </Link>
+        }
+        tag={t('lineup.tag')}
+        title={
+          <span className="game-heading">
+            {game.cap && <span className={`cap-dot big cap-${game.cap}`} title={t(`cap.${game.cap}`)} />}
+            {t('game.vs')} {game.opponent}
+          </span>
+        }
+        sub={[formatDay(game.date, lang), game.time, game.label, game.cap ? t(`cap.${game.cap}`) : ''].filter(Boolean).join(' · ')}
+        actions={
+          <>
+            <span className="game-nav-arrows">
           {prevGame && (
             <Link to={`/tournaments/${tid}/games/${prevGame.id}`} className="btn btn-small" aria-label="previous">
               ‹
@@ -130,23 +145,13 @@ export function LineupPage() {
               ›
             </Link>
           )}
-        </span>
-      </div>
-
-      <div className="page-head">
-        <div>
-          <h1 className="game-heading">
-            {game.cap && <span className={`cap-dot big cap-${game.cap}`} title={t(`cap.${game.cap}`)} />}
-            {t('game.vs')} {game.opponent}
-          </h1>
-          <p className="muted">
-            {[formatDay(game.date, lang), game.time, game.label, game.cap ? t(`cap.${game.cap}`) : ''].filter(Boolean).join(' · ')}
-          </p>
-        </div>
-        <button className="btn btn-small" onClick={() => setEditingGame(true)}>
-          {t('game.edit')}
-        </button>
-      </div>
+            </span>
+            <button className="btn btn-small" onClick={() => setEditingGame(true)}>
+              {t('game.edit')}
+            </button>
+          </>
+        }
+      />
 
       <div className="lineup-bar">
         <strong className={sum.complete ? 'ok-text' : ''}>
