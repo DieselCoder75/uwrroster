@@ -8,6 +8,7 @@ import { formatDay } from '../lib/dates'
 import { fullName } from '../players/model'
 import { usePlayers } from '../players/store'
 import { GameEditor } from './GameEditor'
+import { GameName } from './GameName'
 import { ChipBody, PlayerChip, ZoneBox, collision, useDragSensors } from './dnd'
 import {
   GAME_SUBS,
@@ -15,7 +16,6 @@ import {
   SLOTS,
   emptyLineup,
   gameLineups,
-  gameTitle,
   lineupIds,
   movePlayer,
   moveProblem,
@@ -202,8 +202,7 @@ export function LineupPage() {
         tag={t('lineup.tag')}
         title={
           <span className="game-heading">
-            {game.cap && <span className={`cap-dot big cap-${game.cap}`} title={t(`cap.${game.cap}`)} />}
-            {gameTitle(game)}
+            <GameName game={game} big />
           </span>
         }
         sub={[formatDay(game.date, lang), game.time, game.label, game.cap ? t(`cap.${game.cap}`) : ''].filter(Boolean).join(' · ')}

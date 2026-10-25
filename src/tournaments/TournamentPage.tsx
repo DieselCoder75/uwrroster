@@ -6,9 +6,10 @@ import { formatDay, formatRange } from '../lib/dates'
 import { POSITIONS, fullName } from '../players/model'
 import { usePlayers } from '../players/store'
 import { GameEditor } from './GameEditor'
+import { GameName } from './GameName'
 import { LoadTable } from './LoadTable'
 import { TournamentEditor } from './TournamentEditor'
-import { gameLineups, gameTitle, squadNumberClashes, summarize, tournamentNumber, type Game } from './model'
+import { gameLineups, squadNumberClashes, summarize, tournamentNumber, type Game } from './model'
 import { useGames, useTournament } from './store'
 
 export function TournamentPage() {
@@ -84,13 +85,10 @@ export function TournamentPage() {
                       <strong>{g.time || '–'}</strong>
                       <span className="muted small">{formatDay(g.date, lang)}</span>
                     </span>
-                    <span className="grow">
-                      <span className="game-title">
-                        {g.cap && <span className={`cap-dot cap-${g.cap}`} title={t(`cap.${g.cap}`)} />}
-                        {gameTitle(g)}
-                      </span>
-                      {g.label && <span className="muted small"> · {g.label}</span>}
+                    <span className="game-title">
+                      <GameName game={g} />
                     </span>
+                    {g.label && <span className="game-label muted small">{g.label}</span>}
                     <span className={`status-pill ${ready ? 'ok' : sum.inGame + sum.subs === 0 ? '' : 'partial'}`}>
                       {sum.inGame + sum.subs === 0
                         ? t('games.lineupEmpty')
