@@ -2,6 +2,7 @@ import { DndContext, DragOverlay, type DragEndEvent, type DragStartEvent } from 
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { PageHero } from '../components/PageHero'
+import { ViewOnly } from '../components/ViewOnly'
 import { SaveStatus } from '../components/SaveStatus'
 import { useI18n } from '../i18n'
 import { formatRange } from '../lib/dates'
@@ -28,6 +29,7 @@ import { ChipBody, PlayerChip, ZoneBox, collision, useDragSensors } from './dnd'
 import { tournamentNumber, type Tournament } from './model'
 import { savePools } from './store'
 import { TournamentEditor } from './TournamentEditor'
+import { useTeam } from '../teams/TeamProvider'
 
 const REST = 'REST'
 
@@ -41,6 +43,7 @@ function spotFromZone(zone: string): PoolSpot | null {
 /** A camp: the coach splits the camp's players into pools, and each pool into a blue and a white side. */
 export function CampPage({ tour, players }: { tour: Tournament; players: Player[] }) {
   const { t, lang } = useI18n()
+  const { teamId, canCoach } = useTeam()
   const navigate = useNavigate()
   const sensors = useDragSensors()
   const [selected, setSelected] = useState<string | null>(null)
@@ -61,7 +64,7 @@ export function CampPage({ tour, players }: { tour: Tournament; players: Player[
     setPending((n) => n + 1)
     setError(null)
     try {
-      await savePools(tid, next)
+      await savePools(teamId, tid, next)
     } catch (e) {
       setError(t('app.error', { message: (e as Error).message }))
     } finally {
@@ -155,7 +158,7 @@ export function CampPage({ tour, players }: { tour: Tournament; players: Player[
   return (
     <div className="stack">
       <PageHero
-        image="naisten-joukkue-altaalla"
+        page="camp"
         top={
           <Link to="/tournaments" className="back-link">
             {t('tournaments.back')}
@@ -167,9 +170,11 @@ export function CampPage({ tour, players }: { tour: Tournament; players: Player[
         count={`${tour.squad.length}/${tour.squadSize}`}
         countLabel={t('camp.participantsLabel')}
         actions={
-          <button className="btn" onClick={() => setEditing(true)}>
-            {t('tournament.edit')}
-          </button>
+          canCoach && (
+            <button className="btn" onClick={() => setEditing(true)}>
+              {t('tournament.edit')}
+            </button>
+          )
         }
       />
 
@@ -180,17 +185,22 @@ export function CampPage({ tour, players }: { tour: Tournament; players: Player[
         </strong>
         <SaveStatus pending={pending} />
         <span className="grow" />
-        <Link to={`/tournaments/${tid}/squad`} className="btn btn-small">
-          {t('camp.pickPlayers')}
-        </Link>
-        <button className="btn btn-small btn-primary" onClick={onSplitRest} disabled={rest.length === 0}>
-          {t('camp.splitRest')}
-        </button>
-        <button className="btn btn-small" onClick={onClear} disabled={placedCount === 0}>
-          {t('lineup.clear')}
-        </button>
+        {canCoach && (
+          <>
+            <Link to={`/tournaments/${tid}/squad`} className="btn btn-small">
+              {t('camp.pickPlayers')}
+            </Link>
+            <button className="btn btn-small btn-primary" onClick={onSplitRest} disabled={rest.length === 0}>
+              {t('camp.splitRest')}
+            </button>
+            <button className="btn btn-small" onClick={onClear} disabled={placedCount === 0}>
+              {t('lineup.clear')}
+            </button>
+          </>
+        )}
       </div>
 
+      {!canCoach && <ViewOnly />}
       {error && <p className="error">{error}</p>}
 
       {squad.length === 0 ? (
@@ -216,7 +226,7 @@ export function CampPage({ tour, players }: { tour: Tournament; players: Player[
           )}
 
           <DndContext sensors={sensors} collisionDetection={collision} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setDragging(null)}>
-            <div className="camp-layout">
+            <div className="camp-layout" inert={!canCoach}>
               <ZoneBox zone={REST} className="zone-POOL camp-rest" title={t('camp.rest')} count={rest.length} armed={selectedPlaced} onTap={() => onZoneTap(REST)}>
                 {rest.length === 0 && <p className="muted small">{t('camp.allPlaced')}</p>}
                 {sortSide(rest.map((id) => byId.get(id)!)).map((p) => chip(p.id, false))}

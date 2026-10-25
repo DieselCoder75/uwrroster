@@ -34,8 +34,8 @@ import {
 } from './model'
 import { DEFAULT_POOLS, emptyPool, type CampPool } from './camp'
 
-const tournamentsCol = collection(db, 'tournaments')
-const gamesCol = (tid: string) => collection(db, 'tournaments', tid, 'games')
+const tournamentsCol = (teamId: string) => collection(db, 'teams', teamId, 'tournaments')
+const gamesCol = (teamId: string, tid: string) => collection(db, 'teams', teamId, 'tournaments', tid, 'games')
 
 const str = (v: unknown) => (typeof v === 'string' ? v : '')
 const ids = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [])
@@ -151,66 +151,66 @@ function useSnapshot<T>(subscribe: (set: (s: Loadable<T>) => void) => () => void
   return state
 }
 
-export function useTournaments(): Loadable<Tournament[]> {
+export function useTournaments(teamId: string): Loadable<Tournament[]> {
   return useSnapshot(
     (set) =>
       onSnapshot(
-        tournamentsCol,
+        tournamentsCol(teamId),
         (snap) => set({ status: 'ready', data: sortTournaments(snap.docs.map((d) => tournamentFromDoc(d.id, d.data())), todayIso()) }),
         (e) => set({ status: 'error', message: e.message }),
       ),
-    [],
+    [teamId],
   )
 }
 
-export function useTournament(tid: string): Loadable<Tournament | null> {
+export function useTournament(teamId: string, tid: string): Loadable<Tournament | null> {
   return useSnapshot(
     (set) =>
       onSnapshot(
-        doc(tournamentsCol, tid),
+        doc(tournamentsCol(teamId), tid),
         (snap) => set({ status: 'ready', data: snap.exists() ? tournamentFromDoc(snap.id, snap.data()) : null }),
         (e) => set({ status: 'error', message: e.message }),
       ),
-    [tid],
+    [teamId, tid],
   )
 }
 
-export function useGames(tid: string): Loadable<Game[]> {
+export function useGames(teamId: string, tid: string): Loadable<Game[]> {
   return useSnapshot(
     (set) =>
       onSnapshot(
-        gamesCol(tid),
+        gamesCol(teamId, tid),
         (snap) =>
           // A game added a moment ago has no server time yet; the estimate keeps it last.
           set({ status: 'ready', data: sortGames(snap.docs.map((d) => gameFromDoc(d.id, d.data({ serverTimestamps: 'estimate' })))) }),
         (e) => set({ status: 'error', message: e.message }),
       ),
-    [tid],
+    [teamId, tid],
   )
 }
 
 /** Returns the tournament id straight away (also offline) and the write to wait for. */
-export function saveTournament(id: string | null, input: TournamentInput): { id: string; saved: Promise<void> } {
+export function saveTournament(teamId: string, id: string | null, input: TournamentInput): { id: string; saved: Promise<void> } {
   const data = { ...input, name: input.name.trim(), location: input.location.trim(), updatedAt: serverTimestamp() }
-  if (id) return { id, saved: setDoc(doc(tournamentsCol, id), data, { merge: true }) }
-  const ref = doc(tournamentsCol)
+  if (id) return { id, saved: setDoc(doc(tournamentsCol(teamId), id), data, { merge: true }) }
+  const ref = doc(tournamentsCol(teamId))
   return { id: ref.id, saved: setDoc(ref, { ...data, createdAt: serverTimestamp() }) }
 }
 
-export function saveSquad(tid: string, squad: string[], numbers: Record<string, number>): Promise<void> {
-  return updateDoc(doc(tournamentsCol, tid), { squad, numbers, updatedAt: serverTimestamp() })
+export function saveSquad(teamId: string, tid: string, squad: string[], numbers: Record<string, number>): Promise<void> {
+  return updateDoc(doc(tournamentsCol(teamId), tid), { squad, numbers, updatedAt: serverTimestamp() })
 }
 
-export function savePools(tid: string, pools: CampPool[]): Promise<void> {
-  return updateDoc(doc(tournamentsCol, tid), { pools, updatedAt: serverTimestamp() })
+export function savePools(teamId: string, tid: string, pools: CampPool[]): Promise<void> {
+  return updateDoc(doc(tournamentsCol(teamId), tid), { pools, updatedAt: serverTimestamp() })
 }
 
 /** Deletes a tournament and its games (Firestore doesn't remove subcollections on its own). */
-export async function deleteTournament(tid: string): Promise<void> {
-  const games = await getDocs(gamesCol(tid))
+export async function deleteTournament(teamId: string, tid: string): Promise<void> {
+  const games = await getDocs(gamesCol(teamId, tid))
   const batch = writeBatch(db)
   games.forEach((g) => batch.delete(g.ref))
-  batch.delete(doc(tournamentsCol, tid))
+  batch.delete(doc(tournamentsCol(teamId), tid))
   await batch.commit()
 }
 
@@ -232,13 +232,13 @@ function versionData(v: LineupVersion, by: Editor | null) {
  * Applies changes to a game. The top-level lineup always mirrors the version in use, and a game from before
  * versions gets its lineup stored as the first version on its first change.
  */
-function updateGame(tid: string, game: Game, changes: Record<string, unknown>, active: LineupVersion): Promise<void> {
+function updateGame(teamId: string, tid: string, game: Game, changes: Record<string, unknown>, active: LineupVersion): Promise<void> {
   const data: Record<string, unknown> = {}
   if (!game.activeVersion) {
     const first = game.versions[0]
     data[`versions.${first.id}`] = versionData(first, null)
   }
-  return updateDoc(doc(gamesCol(tid), game.id), {
+  return updateDoc(doc(gamesCol(teamId, tid), game.id), {
     ...data,
     ...changes,
     activeVersion: active.id,
@@ -249,6 +249,7 @@ function updateGame(tid: string, game: Game, changes: Record<string, unknown>, a
 }
 
 export async function saveGame(
+  teamId: string,
   tid: string,
   id: string | null,
   input: Omit<GameInput, 'lineup' | 'lineup2' | 'versions' | 'activeVersion' | 'createdAt'>,
@@ -256,7 +257,7 @@ export async function saveGame(
 ): Promise<void> {
   const data = { ...input, opponent: input.opponent.trim(), label: input.label.trim(), updatedAt: serverTimestamp() }
   if (id) {
-    await setDoc(doc(gamesCol(tid), id), data, { merge: true })
+    await setDoc(doc(gamesCol(teamId, tid), id), data, { merge: true })
     return
   }
   const first: LineupVersion = {
@@ -270,7 +271,7 @@ export async function saveGame(
     updatedBy: null,
     updatedAt: 0,
   }
-  await addDoc(gamesCol(tid), {
+  await addDoc(gamesCol(teamId, tid), {
     ...data,
     lineup: first.lineup,
     lineup2: first.lineup2,
@@ -281,13 +282,14 @@ export async function saveGame(
 }
 
 /** Saves a changed version: its lineups or its name. A null second period follows the first. */
-export function saveVersion(tid: string, game: Game, version: LineupVersion, by: Editor | null): Promise<void> {
+export function saveVersion(teamId: string, tid: string, game: Game, version: LineupVersion, by: Editor | null): Promise<void> {
   const active = findVersion(game, null)
-  return updateGame(tid, game, { [`versions.${version.id}`]: versionData(version, by) }, active.id === version.id ? version : active)
+  return updateGame(teamId, tid, game, { [`versions.${version.id}`]: versionData(version, by) }, active.id === version.id ? version : active)
 }
 
 /** Adds a version, copied from `base` or empty, and puts it in use. Returns its id straight away (also offline). */
 export function createVersion(
+  teamId: string,
   tid: string,
   game: Game,
   base: LineupVersion | null,
@@ -295,7 +297,7 @@ export function createVersion(
   by: Editor | null,
 ): { id: string; saved: Promise<void> } {
   // Firestore's own ids are letters and digits only, so they are safe in a field path.
-  const id = doc(gamesCol(tid)).id
+  const id = doc(gamesCol(teamId, tid)).id
   const version: LineupVersion = {
     id,
     index: nextVersionIndex(game.versions),
@@ -307,18 +309,18 @@ export function createVersion(
     updatedBy: null,
     updatedAt: 0,
   }
-  return { id, saved: updateGame(tid, game, { [`versions.${id}`]: versionData(version, by) }, version) }
+  return { id, saved: updateGame(teamId, tid, game, { [`versions.${id}`]: versionData(version, by) }, version) }
 }
 
-export function setActiveVersion(tid: string, game: Game, version: LineupVersion): Promise<void> {
-  return updateGame(tid, game, {}, version)
+export function setActiveVersion(teamId: string, tid: string, game: Game, version: LineupVersion): Promise<void> {
+  return updateGame(teamId, tid, game, {}, version)
 }
 
 /** Removes a version that is not in use. */
-export function deleteVersion(tid: string, game: Game, version: LineupVersion): Promise<void> {
-  return updateGame(tid, game, { [`versions.${version.id}`]: deleteField() }, findVersion(game, null))
+export function deleteVersion(teamId: string, tid: string, game: Game, version: LineupVersion): Promise<void> {
+  return updateGame(teamId, tid, game, { [`versions.${version.id}`]: deleteField() }, findVersion(game, null))
 }
 
-export function deleteGame(tid: string, gid: string): Promise<void> {
-  return deleteDoc(doc(gamesCol(tid), gid))
+export function deleteGame(teamId: string, tid: string, gid: string): Promise<void> {
+  return deleteDoc(doc(gamesCol(teamId, tid), gid))
 }

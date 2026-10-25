@@ -6,10 +6,12 @@ import { useI18n } from '../i18n'
 import { daysUntil, formatRange, todayIso } from '../lib/dates'
 import { TournamentEditor } from './TournamentEditor'
 import { useTournaments } from './store'
+import { useTeam } from '../teams/TeamProvider'
 
 export function TournamentsPage() {
   const { t, lang } = useI18n()
-  const state = useTournaments()
+  const { teamId, canCoach } = useTeam()
+  const state = useTournaments(teamId)
   const navigate = useNavigate()
   const today = todayIso()
   // Days until the tournament starts; nothing for ongoing and past ones.
@@ -22,12 +24,13 @@ export function TournamentsPage() {
   return (
     <div className="stack">
       <PageHero
-        image="20250927-172557"
+        page="tournaments"
         tag={t('tournaments.tag')}
         title={t('tournaments.title')}
         count={state.data.length}
         countLabel={t('tournaments.countLabel')}
         actions={
+          canCoach && (
           <>
             <button className="btn btn-primary" onClick={() => setAdding('tournament')}>
               + {t('tournaments.add')}
@@ -36,6 +39,7 @@ export function TournamentsPage() {
               + {t('camp.add')}
             </button>
           </>
+          )
         }
       />
 

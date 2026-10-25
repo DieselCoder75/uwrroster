@@ -5,6 +5,7 @@ import { DEFAULT_SQUAD_SIZE, type EventKind, type Tournament } from './model'
 import { CAMP_SIZE, DEFAULT_POOLS, MAX_POOLS, resizePools } from './camp'
 import { whenSaved } from '../lib/online'
 import { deleteTournament, saveTournament } from './store'
+import { useTeam } from '../teams/TeamProvider'
 
 type Props = {
   tournament: Tournament | null
@@ -17,6 +18,7 @@ type Props = {
 
 export function TournamentEditor({ tournament, defaultKind = 'tournament', onClose, onSaved, onDeleted }: Props) {
   const { t } = useI18n()
+  const { teamId } = useTeam()
   const [kind, setKind] = useState<EventKind>(tournament?.kind ?? defaultKind)
   const camp = kind === 'camp'
   const [poolCount, setPoolCount] = useState(String(tournament?.pools.length || DEFAULT_POOLS))
@@ -42,7 +44,7 @@ export function TournamentEditor({ tournament, defaultKind = 'tournament', onClo
     setBusy(true)
     setError(null)
     try {
-      const { id, saved } = saveTournament(tournament?.id ?? null, {
+      const { id, saved } = saveTournament(teamId, tournament?.id ?? null, {
         kind,
         name,
         location,
@@ -67,7 +69,7 @@ export function TournamentEditor({ tournament, defaultKind = 'tournament', onClo
     if (!tournament || !window.confirm(t(camp ? 'camp.deleteConfirm' : 'tournament.deleteConfirm', { name: tournament.name }))) return
     setBusy(true)
     try {
-      await whenSaved(deleteTournament(tournament.id))
+      await whenSaved(deleteTournament(teamId, tournament.id))
       onClose()
       onDeleted?.()
     } catch (err) {

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { PageHero } from '../components/PageHero'
+import { ViewOnly } from '../components/ViewOnly'
 import { SearchBox } from '../components/SearchBox'
 import { useI18n } from '../i18n'
 import { POSITIONS, matchesSearch, type Player, type Position } from './model'
@@ -7,6 +8,8 @@ import { PlayerEditor } from './PlayerEditor'
 import { playerPhoto } from './photos'
 import { importRoster, missingFromPool, usePlayers } from './store'
 import { WEBSITE_ROSTER } from './websiteRoster'
+import { DEFAULT_TEAM_ID } from '../teams/model'
+import { useTeam } from '../teams/TeamProvider'
 
 /** Typical pool size before a squad is picked; more is allowed but flagged. */
 const POOL_LIMIT = 50
@@ -15,7 +18,8 @@ type Filter = 'all' | Position | 'inactive'
 
 export function PlayersPage() {
   const { t } = useI18n()
-  const state = usePlayers()
+  const { teamId, canCoach } = useTeam()
+  const state = usePlayers(teamId)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
   const [editing, setEditing] = useState<Player | 'new' | null>(null)
@@ -28,7 +32,8 @@ export function PlayersPage() {
 
   const players = state.players
   const active = players.filter((p) => p.active)
-  const missing = missingFromPool(WEBSITE_ROSTER, players)
+  // The website's roster is the default team's own; other teams add their players by hand.
+  const missing = canCoach && teamId === DEFAULT_TEAM_ID ? missingFromPool(WEBSITE_ROSTER, players) : []
 
   const shown = players.filter((p) => {
     if (!matchesSearch(p, query)) return false
@@ -41,7 +46,7 @@ export function PlayersPage() {
     setImporting(true)
     setError(null)
     try {
-      await importRoster(missing)
+      await importRoster(teamId, missing)
       setNotice(t('players.imported', { count: missing.length }))
     } catch (e) {
       setError(t('app.error', { message: (e as Error).message }))
@@ -59,16 +64,17 @@ export function PlayersPage() {
   return (
     <div className="stack">
       <PageHero
-        image="pelaajat"
-        focus="center 40%"
+        page="players"
         tag={t('players.tag')}
         title={t('players.title')}
         count={active.length}
         countLabel={t('players.inPool')}
         actions={
-          <button className="btn btn-primary" onClick={() => setEditing('new')}>
-            + {t('players.add')}
-          </button>
+          canCoach && (
+            <button className="btn btn-primary" onClick={() => setEditing('new')}>
+              + {t('players.add')}
+            </button>
+          )
         }
       />
 
@@ -113,7 +119,7 @@ export function PlayersPage() {
             <ul className="player-grid">
               {shown.map((p) => (
                 <li key={p.id}>
-                  <PlayerCard player={p} onClick={() => setEditing(p)} />
+                  <PlayerCard player={p} onClick={canCoach ? () => setEditing(p) : undefined} />
                 </li>
               ))}
             </ul>
@@ -122,17 +128,18 @@ export function PlayersPage() {
       )}
 
       {players.length === 0 && missing.length === 0 && <p className="muted">{t('players.empty')}</p>}
+      {!canCoach && <ViewOnly />}
 
       {editing && <PlayerEditor player={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />}
     </div>
   )
 }
 
-function PlayerCard({ player: p, onClick }: { player: Player; onClick: () => void }) {
+function PlayerCard({ player: p, onClick }: { player: Player; onClick?: () => void }) {
   const { t } = useI18n()
   const photo = playerPhoto(p)
   return (
-    <button className={`player-card pos-${p.mainPosition} ${p.active ? '' : 'inactive'}`} onClick={onClick}>
+    <button className={`player-card pos-${p.mainPosition} ${p.active ? '' : 'inactive'}`} onClick={onClick} disabled={!onClick}>
       {photo && <span className="player-photo" style={{ backgroundImage: `url(${photo})` }} />}
       <span className="player-big-num" aria-hidden="true">
         {p.number ?? ''}

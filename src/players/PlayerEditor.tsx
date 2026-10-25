@@ -3,6 +3,7 @@ import { useI18n } from '../i18n'
 import { POSITIONS, fullName, normalizePlayer, validatePlayer, type CaptainRole, type Player, type PlayerInput, type Position } from './model'
 import { whenSaved } from '../lib/online'
 import { deletePlayer, savePlayer } from './store'
+import { useTeam } from '../teams/TeamProvider'
 
 const EMPTY: PlayerInput = {
   number: null,
@@ -23,6 +24,7 @@ type Props = {
 
 export function PlayerEditor({ player, onClose }: Props) {
   const { t } = useI18n()
+  const { teamId } = useTeam()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const [form, setForm] = useState<PlayerInput>(() => {
     if (!player) return EMPTY
@@ -56,7 +58,7 @@ export function PlayerEditor({ player, onClose }: Props) {
     setBusy(true)
     setError(null)
     try {
-      await whenSaved(savePlayer(player?.id ?? null, input))
+      await whenSaved(savePlayer(teamId, player?.id ?? null, input))
       onClose()
     } catch (err) {
       setError(t('app.error', { message: (err as Error).message }))
@@ -68,7 +70,7 @@ export function PlayerEditor({ player, onClose }: Props) {
     if (!player || !window.confirm(t('player.deleteConfirm', { name: fullName(player) }))) return
     setBusy(true)
     try {
-      await whenSaved(deletePlayer(player.id))
+      await whenSaved(deletePlayer(teamId, player.id))
       onClose()
     } catch (err) {
       setError(t('app.error', { message: (err as Error).message }))

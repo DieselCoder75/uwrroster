@@ -2,6 +2,7 @@ import { DndContext, DragOverlay, type DragEndEvent, type DragStartEvent } from 
 import { useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { PageHero } from '../components/PageHero'
+import { ViewOnly } from '../components/ViewOnly'
 import { SaveStatus } from '../components/SaveStatus'
 import { useAuth } from '../auth/AuthProvider'
 import { useI18n } from '../i18n'
@@ -35,6 +36,7 @@ import {
 } from './model'
 import { saveVersion, useGames, useTournament } from './store'
 import { VersionBar } from './VersionBar'
+import { useTeam } from '../teams/TeamProvider'
 
 const POOL = 'POOL'
 type Zone = Slot | typeof POOL
@@ -42,12 +44,13 @@ type Zone = Slot | typeof POOL
 export function LineupPage() {
   const { tid = '', gid = '' } = useParams()
   const { t, lang } = useI18n()
+  const { teamId, canCoach } = useTeam()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const period: Period = params.get('period') === '2' ? 2 : 1
-  const tournament = useTournament(tid)
-  const games = useGames(tid)
-  const players = usePlayers()
+  const tournament = useTournament(teamId, tid)
+  const games = useGames(teamId, tid)
+  const players = usePlayers(teamId)
   const by = editorOf(useAuth())
   const [selected, setSelected] = useState<string | null>(null)
   const [dragging, setDragging] = useState<string | null>(null)
@@ -107,7 +110,7 @@ export function LineupPage() {
 
   async function persist(next: Lineup | null) {
     const changed = period === 1 ? { ...version, lineup: next ?? emptyLineup() } : { ...version, lineup2: next }
-    await write(() => saveVersion(tid, game, changed, by))
+    await write(() => saveVersion(teamId, tid, game, changed, by))
   }
 
   async function write(save: () => Promise<void>) {
@@ -170,7 +173,7 @@ export function LineupPage() {
   function onCopy() {
     if (!copySource) return
     if (!window.confirm(t('lineup.copyConfirm', { name: copySource.label || copySource.opponent }))) return
-    void write(() => saveVersion(tid, game, { ...version, lineup: pruneLineup(copySource.lineup, squad), lineup2: copySource.lineup2 }, by))
+    void write(() => saveVersion(teamId, tid, game, { ...version, lineup: pruneLineup(copySource.lineup, squad), lineup2: copySource.lineup2 }, by))
   }
 
   function onClear() {
@@ -206,7 +209,7 @@ export function LineupPage() {
     <div className="stack">
       <PageHero
         compact
-        image="pohjassaseisomassa"
+        page="lineup"
         top={
           <Link to={`/tournaments/${tid}`} className="back-link">
             ← {tour.name}
@@ -233,9 +236,11 @@ export function LineupPage() {
             </Link>
           )}
             </span>
-            <button className="btn btn-small" onClick={() => setEditingGame(true)}>
-              {t('game.edit')}
-            </button>
+            {canCoach && (
+              <button className="btn btn-small" onClick={() => setEditingGame(true)}>
+                {t('game.edit')}
+              </button>
+            )}
           </>
         }
       />
@@ -263,12 +268,12 @@ export function LineupPage() {
         )}
         <SaveStatus pending={pending} />
         <span className="grow" />
-        {period === 1 && copySource && (
+        {canCoach && period === 1 && copySource && (
           <button className="btn btn-small" onClick={onCopy}>
             {t('lineup.copyFrom')}
           </button>
         )}
-        {period === 1 ? (
+        {!canCoach ? null : period === 1 ? (
           <button className="btn btn-small" onClick={onClear} disabled={sum.inGame + sum.subs === 0}>
             {t('lineup.clear')}
           </button>
@@ -285,6 +290,7 @@ export function LineupPage() {
         <p className="muted small">{secondSame ? t('lineup.period2Same') : t('lineup.period2Help')}</p>
       )}
 
+      {!canCoach && <ViewOnly />}
       {error && <p className="error">{error}</p>}
 
       {squad.length === 0 ? (
@@ -305,7 +311,7 @@ export function LineupPage() {
           )}
 
           <DndContext sensors={sensors} collisionDetection={collision} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setDragging(null)}>
-            <div className="lineup-layout">
+            <div className="lineup-layout" inert={!canCoach}>
               <div className="zones">
                 {SLOTS.map((slot) => (
                   <ZoneBox

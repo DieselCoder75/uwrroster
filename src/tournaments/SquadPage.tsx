@@ -2,6 +2,7 @@ import { DndContext, DragOverlay, type DragEndEvent, type DragStartEvent } from 
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { PageHero } from '../components/PageHero'
+import { ViewOnly } from '../components/ViewOnly'
 import { SaveStatus } from '../components/SaveStatus'
 import { SearchBox } from '../components/SearchBox'
 import { useI18n } from '../i18n'
@@ -11,6 +12,7 @@ import { ChipBody, PlayerChip, ZoneBox, collision, useDragSensors } from './dnd'
 import { NumbersEditor } from './NumbersEditor'
 import { squadNumberClashes, tournamentNumber } from './model'
 import { saveSquad, useTournament } from './store'
+import { useTeam } from '../teams/TeamProvider'
 
 const SQUAD = 'SQUAD'
 const POOL = 'POOL'
@@ -20,8 +22,9 @@ type Zone = typeof SQUAD | typeof POOL
 export function SquadPage() {
   const { tid = '' } = useParams()
   const { t } = useI18n()
-  const tournament = useTournament(tid)
-  const players = usePlayers()
+  const { teamId, canCoach } = useTeam()
+  const tournament = useTournament(teamId, tid)
+  const players = usePlayers(teamId)
   const sensors = useDragSensors()
   const [selected, setSelected] = useState<string | null>(null)
   const [dragging, setDragging] = useState<string | null>(null)
@@ -66,7 +69,7 @@ export function SquadPage() {
     setError(null)
     try {
       // Keep the pool's order so the squad reads the same everywhere.
-      await saveSquad(
+      await saveSquad(teamId,
         tid,
         poolPlayers.filter((p) => ids.has(p.id)).map((p) => p.id),
         numbers,
@@ -143,7 +146,7 @@ export function SquadPage() {
     <div className="stack">
       <PageHero
         compact
-        image="tiukkakarvauspohjassa"
+        page="squad"
         top={
           <Link to={`/tournaments/${tid}`} className="back-link">
             ← {tour.name}
@@ -160,11 +163,14 @@ export function SquadPage() {
         </strong>
         <SaveStatus pending={pending} />
         <span className="grow" />
-        <button className="btn btn-small" onClick={() => setEditingNumbers(true)} disabled={squad.length === 0}>
-          {t('squad.numbers')}
-        </button>
+        {canCoach && (
+          <button className="btn btn-small" onClick={() => setEditingNumbers(true)} disabled={squad.length === 0}>
+            {t('squad.numbers')}
+          </button>
+        )}
       </div>
 
+      {!canCoach && <ViewOnly />}
       {error && <p className="error">{error}</p>}
       {[...clashes].map((n) => (
         <p key={n} className="notice warn-notice small">
@@ -188,7 +194,7 @@ export function SquadPage() {
       )}
 
       <DndContext sensors={sensors} collisionDetection={collision} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setDragging(null)}>
-        <div className="squad-layout">
+        <div className="squad-layout" inert={!canCoach}>
           <ZoneBox
             zone={SQUAD}
             title={t(camp ? 'camp.participants' : 'squad.title')}

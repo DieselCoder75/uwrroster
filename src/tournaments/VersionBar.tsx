@@ -4,6 +4,7 @@ import { useI18n } from '../i18n'
 import { formatStamp } from '../lib/dates'
 import { editorName, findVersion, versionLabel, type Editor, type Game, type LineupVersion } from './model'
 import { createVersion, deleteVersion, saveVersion, setActiveVersion } from './store'
+import { useTeam } from '../teams/TeamProvider'
 
 type Props = {
   tid: string
@@ -19,6 +20,7 @@ type Props = {
 /** Picks which lineup version to look at, and makes, renames, deletes or puts versions in use. */
 export function VersionBar({ tid, game, version, by, onOpen, write }: Props) {
   const { t, lang } = useI18n()
+  const { teamId, canCoach } = useTeam()
   const [sheet, setSheet] = useState<'new' | 'rename' | null>(null)
   const active = findVersion(game, null)
   const inUse = version.id === active.id
@@ -34,7 +36,7 @@ export function VersionBar({ tid, game, version, by, onOpen, write }: Props) {
   function onDelete() {
     if (!window.confirm(t('version.deleteConfirm', { name: versionLabel(version) }))) return
     onOpen(active.id)
-    void write(() => deleteVersion(tid, game, version))
+    void write(() => deleteVersion(teamId, tid, game, version))
   }
 
   return (
@@ -54,13 +56,13 @@ export function VersionBar({ tid, game, version, by, onOpen, write }: Props) {
         {inUse ? (
           <span className="status-pill ok">✓ {t('version.inUse')}</span>
         ) : (
-          <button className="btn btn-small btn-primary" onClick={() => void write(() => setActiveVersion(tid, game, version))}>
+          canCoach && <button className="btn btn-small btn-primary" onClick={() => void write(() => setActiveVersion(teamId, tid, game, version))}>
             {t('version.use')}
           </button>
         )}
       </div>
       {meta.length > 0 && <p className="muted small">{meta.join(' · ')}</p>}
-      <div className="version-actions">
+      {canCoach && <div className="version-actions">
         <button className="btn btn-small" onClick={() => setSheet('new')}>
           + {t('version.new')}
         </button>
@@ -72,7 +74,7 @@ export function VersionBar({ tid, game, version, by, onOpen, write }: Props) {
             {t('version.delete')}
           </button>
         )}
-      </div>
+      </div>}
       {game.versions.length > 1 && <p className="muted small">{t('version.help')}</p>}
 
       {sheet && (
@@ -83,8 +85,8 @@ export function VersionBar({ tid, game, version, by, onOpen, write }: Props) {
           onClose={() => setSheet(null)}
           onSubmit={(name, base) => {
             setSheet(null)
-            if (sheet === 'rename') return void write(() => saveVersion(tid, game, { ...version, name }, by))
-            const { id, saved } = createVersion(tid, game, base, name, by)
+            if (sheet === 'rename') return void write(() => saveVersion(teamId, tid, game, { ...version, name }, by))
+            const { id, saved } = createVersion(teamId, tid, game, base, name, by)
             onOpen(id)
             void write(() => saved)
           }}

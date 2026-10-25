@@ -1,8 +1,13 @@
 import type { ReactNode } from 'react'
-import { heroSrcSet, type HeroImage } from './heroImages'
+import type { HeroPage } from '../teams/model'
+import { useHeroPhoto } from '../teams/store'
+import { useTeamState } from '../teams/TeamProvider'
+import { DEFAULT_HERO, heroSrcSet, type HeroImage } from './heroImages'
 
 type Props = {
-  image: HeroImage
+  /** A page with a photo the team can change, or a fixed photo. */
+  page?: HeroPage
+  image?: HeroImage
   /** Where the photo is cropped, as CSS object-position. */
   focus?: string
   tag: ReactNode
@@ -18,10 +23,22 @@ type Props = {
 }
 
 /** Full-width photo banner in the style of the team website's page heroes. */
-export function PageHero({ image, focus, tag, title, sub, count, countLabel, top, actions, compact }: Props) {
+export function PageHero({ image, page, focus, tag, title, sub, count, countLabel, top, actions, compact }: Props) {
+  const team = useTeamState()
+  const photo = useHeroPhoto(team.status === 'ready' ? team.team.id : null, page)
+  const fallback = image ? { image, focus } : page ? DEFAULT_HERO[page] : DEFAULT_HERO.home
+  const srcSet = photo ? `${photo.small} 960w, ${photo.large} 1920w` : heroSrcSet(fallback.image)
+  const position = photo ? photo.focus : fallback.focus
   return (
     <header className={`hero ${compact ? 'hero-compact' : ''}`}>
-      <img className="hero-img" srcSet={heroSrcSet(image)} sizes="100vw" alt="" style={focus ? { objectPosition: focus } : undefined} />
+      <img
+        key={photo ? photo.large : fallback.image}
+        className="hero-img"
+        srcSet={srcSet}
+        sizes="100vw"
+        alt=""
+        style={position ? { objectPosition: position } : undefined}
+      />
       <div className="hero-shade" />
       <div className="hero-inner">
         <div className="hero-text">

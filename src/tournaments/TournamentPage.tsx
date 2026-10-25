@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { PageHero } from '../components/PageHero'
+import { ViewOnly } from '../components/ViewOnly'
 import { useI18n } from '../i18n'
 import { formatDay, formatRange } from '../lib/dates'
 import { POSITIONS, fullName } from '../players/model'
@@ -12,14 +13,16 @@ import { LoadTable } from './LoadTable'
 import { TournamentEditor } from './TournamentEditor'
 import { findVersion, gameLineups, squadNumberClashes, summarize, tournamentNumber, versionLabel, type Game } from './model'
 import { useGames, useTournament } from './store'
+import { useTeam } from '../teams/TeamProvider'
 
 export function TournamentPage() {
   const { tid = '' } = useParams()
   const { t, lang } = useI18n()
+  const { teamId, canCoach } = useTeam()
   const navigate = useNavigate()
-  const tournament = useTournament(tid)
-  const games = useGames(tid)
-  const players = usePlayers()
+  const tournament = useTournament(teamId, tid)
+  const games = useGames(teamId, tid)
+  const players = usePlayers(teamId)
   const [editing, setEditing] = useState(false)
   const [editingGame, setEditingGame] = useState<Game | 'new' | null>(null)
 
@@ -49,7 +52,7 @@ export function TournamentPage() {
   return (
     <div className="stack">
       <PageHero
-        image="keskikentta"
+        page="tournament"
         top={
           <Link to="/tournaments" className="back-link">
             {t('tournaments.back')}
@@ -61,9 +64,11 @@ export function TournamentPage() {
         count={`${tour.squad.length}/${tour.squadSize}`}
         countLabel={t('tournament.squadLabel')}
         actions={
-          <button className="btn" onClick={() => setEditing(true)}>
-            {t('tournament.edit')}
-          </button>
+          canCoach && (
+            <button className="btn" onClick={() => setEditing(true)}>
+              {t('tournament.edit')}
+            </button>
+          )
         }
       />
 
@@ -71,9 +76,11 @@ export function TournamentPage() {
         <section className="card stack">
           <div className="section-head">
             <h2>{t('games.title')}</h2>
-            <button className="btn btn-small btn-primary" onClick={() => setEditingGame('new')}>
-              + {t('games.add')}
-            </button>
+            {canCoach && (
+              <button className="btn btn-small btn-primary" onClick={() => setEditingGame('new')}>
+                + {t('games.add')}
+              </button>
+            )}
           </div>
           {games.data.length === 0 && <p className="muted">{t('games.empty')}</p>}
           <ul className="list">
@@ -122,9 +129,11 @@ export function TournamentPage() {
                 {tour.squad.length}/{tour.squadSize}
               </span>
             </h2>
-            <Link to={`/tournaments/${tid}/squad`} className="btn btn-small">
-              {t('squad.edit')}
-            </Link>
+            {canCoach && (
+              <Link to={`/tournaments/${tid}/squad`} className="btn btn-small">
+                {t('squad.edit')}
+              </Link>
+            )}
           </div>
           {tour.squad.length > tour.squadSize && (
             <p className="notice small">{t('squad.over', { count: tour.squad.length, size: tour.squadSize })}</p>
@@ -166,6 +175,8 @@ export function TournamentPage() {
       </div>
 
       <LoadTable tour={tour} games={games.data} players={players.players} />
+
+      {!canCoach && <ViewOnly />}
 
       {editing && (
         <TournamentEditor tournament={tour} onClose={() => setEditing(false)} onDeleted={() => navigate('/tournaments')} />

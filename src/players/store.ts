@@ -4,7 +4,7 @@ import { db } from '../firebase'
 import { POSITIONS, fullName, normalizePlayer, sortPlayers, type Player, type PlayerInput, type Position } from './model'
 import type { RosterEntry } from './websiteRoster'
 
-const playersCol = collection(db, 'players')
+const playersCol = (teamId: string) => collection(db, 'teams', teamId, 'players')
 
 function fromDoc(id: string, d: Record<string, unknown>): Player {
   const pos = (v: unknown): v is Position => POSITIONS.includes(v as Position)
@@ -23,28 +23,28 @@ function fromDoc(id: string, d: Record<string, unknown>): Player {
 
 export type PlayersState = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; players: Player[] }
 
-export function usePlayers(): PlayersState {
+export function usePlayers(teamId: string): PlayersState {
   const [state, setState] = useState<PlayersState>({ status: 'loading' })
   useEffect(
     () =>
       onSnapshot(
-        playersCol,
+        playersCol(teamId),
         (snap) => setState({ status: 'ready', players: sortPlayers(snap.docs.map((d) => fromDoc(d.id, d.data()))) }),
         (e) => setState({ status: 'error', message: e.message }),
       ),
-    [],
+    [teamId],
   )
   return state
 }
 
-export async function savePlayer(id: string | null, input: PlayerInput): Promise<void> {
+export async function savePlayer(teamId: string, id: string | null, input: PlayerInput): Promise<void> {
   const data = { ...normalizePlayer(input), updatedAt: serverTimestamp() }
-  if (id) await setDoc(doc(playersCol, id), data, { merge: true })
-  else await addDoc(playersCol, { ...data, createdAt: serverTimestamp() })
+  if (id) await setDoc(doc(playersCol(teamId), id), data, { merge: true })
+  else await addDoc(playersCol(teamId), { ...data, createdAt: serverTimestamp() })
 }
 
-export function deletePlayer(id: string): Promise<void> {
-  return deleteDoc(doc(playersCol, id))
+export function deletePlayer(teamId: string, id: string): Promise<void> {
+  return deleteDoc(doc(playersCol(teamId), id))
 }
 
 /** Roster entries not yet in the pool, matched by name so re-running the import never duplicates. */
@@ -53,7 +53,7 @@ export function missingFromPool(roster: RosterEntry[], existing: Player[]): Rost
   return roster.filter((r) => !have.has(fullName(r).toLowerCase()))
 }
 
-export async function importRoster(entries: RosterEntry[]): Promise<void> {
+export async function importRoster(teamId: string, entries: RosterEntry[]): Promise<void> {
   const batch = writeBatch(db)
   for (const r of entries) {
     const input: PlayerInput = {
@@ -66,7 +66,7 @@ export async function importRoster(entries: RosterEntry[]): Promise<void> {
       captain: r.captain,
       active: true,
     }
-    batch.set(doc(playersCol), { ...input, createdAt: serverTimestamp(), updatedAt: serverTimestamp() })
+    batch.set(doc(playersCol(teamId)), { ...input, createdAt: serverTimestamp(), updatedAt: serverTimestamp() })
   }
   await batch.commit()
 }
