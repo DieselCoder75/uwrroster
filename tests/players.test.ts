@@ -63,6 +63,7 @@ describe('player model', () => {
     expect(matchesSearch(p, '42')).toBe(true)
     expect(matchesSearch(p, '4')).toBe(false)
     expect(matchesSearch(p, 'uusi')).toBe(true)
+    expect(matchesSearch({ ...p, number: null }, 'null')).toBe(false)
   })
 
   it('finds repeated numbers, ignoring missing ones', () => {

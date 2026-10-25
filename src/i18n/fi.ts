@@ -205,7 +205,7 @@ export const fi = {
   'lineup.copyFrom': 'Kopioi edellisestä pelistä',
   'lineup.copyConfirm': 'Korvataanko kokoonpano pelin {name} kokoonpanolla?',
   'lineup.clear': 'Tyhjennä',
-  'lineup.clearConfirm': 'Tyhjennetäänkö kokoonpano?',
+  'lineup.clearConfirm': 'Tyhjennetäänkö kokoonpano molemmista eristä?',
   'lineup.saving': 'Tallennetaan…',
   'lineup.saved': 'Tallennettu',
   'lineup.fit.locked': 'Lukittu pelipaikkaan {pos}',

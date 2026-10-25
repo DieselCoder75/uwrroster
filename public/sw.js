@@ -28,8 +28,8 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(req)
         .then((res) => {
-          const copy = res.clone()
-          caches.open(CACHE).then((cache) => cache.put('/index.html', copy))
+          // An error page is never saved as the app.
+          if (res.ok) event.waitUntil(saveShell(res.clone()))
           return res
         })
         .catch(() => caches.match('/index.html')),
@@ -52,3 +52,18 @@ self.addEventListener('fetch', (event) => {
     ),
   )
 })
+
+/**
+ * Saves the newest index.html and drops built files that it no longer uses. Each release has new file names,
+ * so without this every old release would stay on the phone.
+ */
+async function saveShell(res) {
+  const html = await res.clone().text()
+  const cache = await caches.open(CACHE)
+  await cache.put('/index.html', res)
+  const used = new Set(html.match(/\/assets\/[^"'\s)]+/g) ?? [])
+  for (const req of await cache.keys()) {
+    const path = new URL(req.url).pathname
+    if (path.startsWith('/assets/') && !used.has(path)) await cache.delete(req)
+  }
+}

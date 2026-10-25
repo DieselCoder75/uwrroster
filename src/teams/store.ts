@@ -134,29 +134,46 @@ function revoke(photos: Iterable<HeroPhoto>) {
   }
 }
 
+/**
+ * Photos already decoded on this device, by team and page. Opening a page shows its photo straight away instead
+ * of flashing the app's own photo (and downloading it) while the team's photo is read again.
+ */
+const heroCache = new Map<string, { stamp: string; photo: HeroPhoto | null }>()
+
+/** Changes whenever the stored photo does, so an unchanged photo isn't decoded again. */
+function photoStamp(d: Record<string, unknown> | undefined): string {
+  if (!d) return 'none'
+  const at = d.updatedAt as { toMillis?: () => number } | undefined
+  const size = d.large instanceof Bytes ? d.large.toUint8Array().length : 0
+  return `${at?.toMillis?.() ?? ''}/${size}/${String(d.focus ?? '')}`
+}
+
 /** The team's photo for one page, or null to use the app's own. */
 export function useHeroPhoto(teamId: string | null, page: HeroPage | undefined): HeroPhoto | null {
-  const [photo, setPhoto] = useState<HeroPhoto | null>(null)
+  const key = teamId && page ? `${teamId}/${page}` : null
+  const [state, setState] = useState<{ key: string | null; photo: HeroPhoto | null }>(() => ({
+    key,
+    photo: key ? (heroCache.get(key)?.photo ?? null) : null,
+  }))
   useEffect(() => {
-    setPhoto(null)
-    if (!teamId || !page) return
-    let current: HeroPhoto | null = null
-    const stop = onSnapshot(
+    if (!key || !teamId || !page) return
+    return onSnapshot(
       doc(imagesCol(teamId), page),
       (snap) => {
-        if (current) revoke([current])
-        current = snap.exists() ? photoFromDoc(page, snap.data()) : null
-        setPhoto(current)
+        const data = snap.exists() ? snap.data({ serverTimestamps: 'estimate' }) : undefined
+        const stamp = photoStamp(data)
+        const cached = heroCache.get(key)
+        if (cached?.stamp !== stamp) {
+          if (cached?.photo) revoke([cached.photo])
+          heroCache.set(key, { stamp, photo: data ? photoFromDoc(page, data) : null })
+        }
+        setState({ key, photo: heroCache.get(key)!.photo })
       },
       // No access or offline without a copy: just show the app's own photo.
-      () => setPhoto(null),
+      () => setState({ key, photo: null }),
     )
-    return () => {
-      stop()
-      if (current) revoke([current])
-    }
-  }, [teamId, page])
-  return photo
+  }, [key, teamId, page])
+  return state.key === key ? state.photo : key ? (heroCache.get(key)?.photo ?? null) : null
 }
 
 /** All of a team's own photos, for the admin panel. */

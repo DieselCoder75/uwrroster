@@ -46,7 +46,10 @@ export function TournamentPage() {
 
   if (tour.kind === 'camp') return <CampPage tour={tour} players={players.players} />
 
-  const squadPlayers = players.players.filter((p) => tour.squad.includes(p.id))
+  const inSquad = new Set(tour.squad)
+  const squadPlayers = players.players.filter((p) => inSquad.has(p.id))
+  // Squad ids of players still in the pool: a deleted player isn't counted in the squad or the lineups.
+  const squad = squadPlayers.map((p) => p.id)
   const clashes = squadNumberClashes(tour, players.players)
 
   return (
@@ -61,7 +64,7 @@ export function TournamentPage() {
         tag={formatRange(tour.startDate, tour.endDate, lang)}
         title={tour.name}
         sub={tour.location}
-        count={`${tour.squad.length}/${tour.squadSize}`}
+        count={`${squad.length}/${tour.squadSize}`}
         countLabel={t('tournament.squadLabel')}
         actions={
           canCoach && (
@@ -85,7 +88,7 @@ export function TournamentPage() {
           {games.data.length === 0 && <p className="muted">{t('games.empty')}</p>}
           <ul className="list">
             {games.data.map((g) => {
-              const { first, second } = gameLineups(g, tour.squad)
+              const { first, second } = gameLineups(g, squad)
               const sum = summarize(first)
               const ready = sum.complete && summarize(second).complete
               return (
@@ -125,8 +128,8 @@ export function TournamentPage() {
           <div className="section-head">
             <h2>
               {t('squad.title')}{' '}
-              <span className={`muted ${tour.squad.length > tour.squadSize ? 'warn' : ''}`}>
-                {tour.squad.length}/{tour.squadSize}
+              <span className={`muted ${squad.length > tour.squadSize ? 'warn' : ''}`}>
+                {squad.length}/{tour.squadSize}
               </span>
             </h2>
             {canCoach && (
@@ -135,8 +138,8 @@ export function TournamentPage() {
               </Link>
             )}
           </div>
-          {tour.squad.length > tour.squadSize && (
-            <p className="notice small">{t('squad.over', { count: tour.squad.length, size: tour.squadSize })}</p>
+          {squad.length > tour.squadSize && (
+            <p className="notice small">{t('squad.over', { count: squad.length, size: tour.squadSize })}</p>
           )}
           {[...clashes].map((n) => (
             <p key={n} className="notice warn-notice small">

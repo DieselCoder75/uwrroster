@@ -114,7 +114,16 @@ export function TournamentEditor({ tournament, defaultKind = 'tournament', onClo
         <div className="row">
           <label className="field grow">
             <span>{t('tournament.startDate')}</span>
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => {
+                const start = e.target.value
+                setStartDate(start)
+                // Moving the start past the end moves the end with it, so the dates never end before they start.
+                if (start && endDate && endDate < start) setEndDate(start)
+              }}
+            />
           </label>
           <label className="field grow">
             <span>{t('tournament.endDate')}</span>
