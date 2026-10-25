@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { PageHero } from '../components/PageHero'
 import { SaveStatus } from '../components/SaveStatus'
+import { useAuth } from '../auth/AuthProvider'
 import { useI18n } from '../i18n'
 import { formatDay } from '../lib/dates'
 import { fullName } from '../players/model'
@@ -14,7 +15,9 @@ import {
   GAME_SUBS,
   PERIODS,
   SLOTS,
+  editorOf,
   emptyLineup,
+  findVersion,
   gameLineups,
   lineupIds,
   movePlayer,
@@ -30,7 +33,8 @@ import {
   type Period,
   type Slot,
 } from './model'
-import { saveLineup, saveLineups, useGames, useTournament } from './store'
+import { saveVersion, useGames, useTournament } from './store'
+import { VersionBar } from './VersionBar'
 
 const POOL = 'POOL'
 type Zone = Slot | typeof POOL
@@ -44,6 +48,7 @@ export function LineupPage() {
   const tournament = useTournament(tid)
   const games = useGames(tid)
   const players = usePlayers()
+  const by = editorOf(useAuth())
   const [selected, setSelected] = useState<string | null>(null)
   const [dragging, setDragging] = useState<string | null>(null)
   const [pending, setPending] = useState(0)
@@ -75,8 +80,10 @@ export function LineupPage() {
   // Show the number each player wears in this tournament.
   const byId = new Map(players.players.map((p) => [p.id, { ...p, number: tournamentNumber(tour, p) }]))
   const squad = tour.squad.filter((id) => byId.has(id))
+  // The version open here; any version can be edited, the one in use counts elsewhere.
+  const version = findVersion(game, params.get('v'))
   // Firestore applies our own writes to the snapshot immediately, so the game doc is the single source of truth.
-  const { first, second, secondSame } = gameLineups(game, squad)
+  const { first, second, secondSame } = gameLineups(version, squad)
   const lineup = period === 1 ? first : second
   // The second period is played by the same 15 who were named for the start.
   const starting15 = lineupIds(first)
@@ -99,7 +106,8 @@ export function LineupPage() {
     .find((g) => SLOTS.some((s) => g.lineup[s].length > 0))
 
   async function persist(next: Lineup | null) {
-    await write(() => saveLineup(tid, gid, period, next))
+    const changed = period === 1 ? { ...version, lineup: next ?? emptyLineup() } : { ...version, lineup2: next }
+    await write(() => saveVersion(tid, game, changed, by))
   }
 
   async function write(save: () => Promise<void>) {
@@ -162,7 +170,7 @@ export function LineupPage() {
   function onCopy() {
     if (!copySource) return
     if (!window.confirm(t('lineup.copyConfirm', { name: copySource.label || copySource.opponent }))) return
-    void write(() => saveLineups(tid, gid, pruneLineup(copySource.lineup, squad), copySource.lineup2))
+    void write(() => saveVersion(tid, game, { ...version, lineup: pruneLineup(copySource.lineup, squad), lineup2: copySource.lineup2 }, by))
   }
 
   function onClear() {
@@ -173,11 +181,16 @@ export function LineupPage() {
     if (window.confirm(t('lineup.sameAsFirstConfirm'))) void persist(null)
   }
 
-  function setPeriod(p: Period) {
+  function setView(p: Period, versionId: string | null) {
     setSelected(null)
     setError(null)
-    setParams(p === 1 ? {} : { period: '2' }, { replace: true })
+    const next: Record<string, string> = {}
+    if (p === 2) next.period = '2'
+    if (versionId) next.v = versionId
+    setParams(next, { replace: true })
   }
+
+  const setPeriod = (p: Period) => setView(p, params.get('v'))
 
   function noteFor(id: string) {
     if (period !== 2) return undefined
@@ -226,6 +239,8 @@ export function LineupPage() {
           </>
         }
       />
+
+      <VersionBar tid={tid} game={game} version={version} by={by} onOpen={(id) => setView(period, id)} write={write} />
 
       <div className="segmented period-tabs" role="tablist">
         {PERIODS.map((p) => (

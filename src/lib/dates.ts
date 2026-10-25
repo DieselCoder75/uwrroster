@@ -38,3 +38,14 @@ export function daysUntil(iso: string, from: string): number {
   // Round so a daylight-saving change in between doesn't cost a day.
   return Math.round((b.getTime() - a.getTime()) / 86_400_000)
 }
+
+/** "25.10. klo 21.05" / "25 Oct, 21:05" from milliseconds; empty when not known. */
+export function formatStamp(ms: number, lang: Lang): string {
+  if (!ms) return ''
+  return new Date(ms).toLocaleString(locale(lang), {
+    day: 'numeric',
+    month: lang === 'fi' ? 'numeric' : 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}

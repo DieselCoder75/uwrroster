@@ -27,6 +27,24 @@ export type Tournament = {
 
 export type TournamentInput = Omit<Tournament, 'id'>
 
+/** Who made a change: the coach's email and their name when the sign-in gives one. */
+export type Editor = { email: string; name: string }
+
+/** One version of a game's lineup. Coaches can keep several and pick the one in use. */
+export type LineupVersion = {
+  id: string
+  /** 1, 2, 3… in the order the versions were made. */
+  index: number
+  name: string
+  lineup: Lineup
+  lineup2: Lineup | null
+  createdBy: Editor | null
+  /** Milliseconds; 0 when not known. */
+  createdAt: number
+  updatedBy: Editor | null
+  updatedAt: number
+}
+
 export type Game = {
   id: string
   opponent: string
@@ -35,15 +53,48 @@ export type Game = {
   cap: Cap | null
   /** Free text such as "Match 6" or "Semi-final". */
   label: string
-  /** Starting lineup: the game's 15 (12 in the game and 3 substitutes) for the first period. */
+  /** Starting lineup of the version in use: the game's 15 (12 in the game and 3 substitutes) for the first period. */
   lineup: Lineup
-  /** Second-period lineup, picked from the same 15. Null means the same as the first period. */
+  /** Second-period lineup of the version in use, picked from the same 15. Null means the same as the first period. */
   lineup2: Lineup | null
+  /** All lineup versions, oldest first. Always at least one. */
+  versions: LineupVersion[]
+  /** The version the game uses: its status, the playing load and copying to other games follow it. */
+  activeVersion: string
   /** When the game was added, in milliseconds; orders games that share a time. */
   createdAt: number
 }
 
 export type GameInput = Omit<Game, 'id'>
+
+/** Id of the first version of every game, including games from before versions. */
+export const FIRST_VERSION = 'v1'
+
+/** "#2 Strong lineup", or just "#2" without a name. */
+export function versionLabel(v: Pick<LineupVersion, 'index' | 'name'>): string {
+  return v.name ? `#${v.index} ${v.name}` : `#${v.index}`
+}
+
+/** The version with this id, or the one in use when there is none. */
+export function findVersion(game: Pick<Game, 'versions' | 'activeVersion'>, id: string | null): LineupVersion {
+  const { versions } = game
+  return versions.find((v) => v.id === id) ?? versions.find((v) => v.id === game.activeVersion) ?? versions[0]
+}
+
+export function nextVersionIndex(versions: Pick<LineupVersion, 'index'>[]): number {
+  return versions.reduce((max, v) => Math.max(max, v.index), 0) + 1
+}
+
+/** The signed-in coach as an editor, from the app's auth state. */
+export function editorOf(auth: { status: string; email?: string; user?: { displayName: string | null } }): Editor | null {
+  return auth.status === 'coach' && auth.email ? { email: auth.email, name: auth.user?.displayName ?? '' } : null
+}
+
+/** A name to show for a coach: their own name, else the part of the email before the @. */
+export function editorName(editor: Editor | null): string {
+  if (!editor) return ''
+  return editor.name.trim() || editor.email.split('@')[0]
+}
 
 /** Our team's name in game titles. */
 export const OUR_TEAM = 'Finland'

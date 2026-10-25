@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDocs,
   onSnapshot,
@@ -16,14 +17,18 @@ import { db } from '../firebase'
 import { todayIso } from '../lib/dates'
 import {
   DEFAULT_SQUAD_SIZE,
+  FIRST_VERSION,
   SLOTS,
   emptyLineup,
+  findVersion,
+  nextVersionIndex,
   sortGames,
   sortTournaments,
+  type Editor,
   type Game,
   type GameInput,
   type Lineup,
-  type Period,
+  type LineupVersion,
   type Tournament,
   type TournamentInput,
 } from './model'
@@ -60,7 +65,53 @@ function lineupFrom(v: unknown): Lineup {
   return lineup
 }
 
+const millis = (v: unknown) => (v instanceof Timestamp ? v.toMillis() : 0)
+
+function editorFrom(v: unknown): Editor | null {
+  const raw = (v ?? {}) as Record<string, unknown>
+  return typeof raw.email === 'string' ? { email: raw.email, name: str(raw.name) } : null
+}
+
+function versionsFrom(d: Record<string, unknown>, gameCreatedAt: number): LineupVersion[] {
+  const raw = d.versions && typeof d.versions === 'object' ? (d.versions as Record<string, unknown>) : {}
+  const list = Object.entries(raw)
+    .filter(([, v]) => v && typeof v === 'object')
+    .map(([id, v]): LineupVersion => {
+      const x = v as Record<string, unknown>
+      return {
+        id,
+        index: typeof x.index === 'number' ? x.index : 0,
+        name: str(x.name),
+        lineup: lineupFrom(x.lineup),
+        lineup2: x.lineup2 ? lineupFrom(x.lineup2) : null,
+        createdBy: editorFrom(x.createdBy),
+        createdAt: millis(x.createdAt),
+        updatedBy: editorFrom(x.updatedBy),
+        updatedAt: millis(x.updatedAt),
+      }
+    })
+  if (list.length > 0) return list.sort((a, b) => a.index - b.index)
+  // Games from before versions: their lineup is the first version.
+  return [
+    {
+      id: FIRST_VERSION,
+      index: 1,
+      name: '',
+      lineup: lineupFrom(d.lineup),
+      lineup2: d.lineup2 ? lineupFrom(d.lineup2) : null,
+      createdBy: null,
+      createdAt: gameCreatedAt,
+      updatedBy: null,
+      updatedAt: 0,
+    },
+  ]
+}
+
 function gameFromDoc(id: string, d: Record<string, unknown>): Game {
+  const createdAt = millis(d.createdAt)
+  const versions = versionsFrom(d, createdAt)
+  const activeVersion = str(d.activeVersion)
+  const active = findVersion({ versions, activeVersion }, null)
   return {
     id,
     opponent: str(d.opponent),
@@ -68,9 +119,11 @@ function gameFromDoc(id: string, d: Record<string, unknown>): Game {
     time: str(d.time),
     cap: d.cap === 'blue' || d.cap === 'white' ? d.cap : null,
     label: str(d.label),
-    lineup: lineupFrom(d.lineup),
-    lineup2: d.lineup2 ? lineupFrom(d.lineup2) : null,
-    createdAt: d.createdAt instanceof Timestamp ? d.createdAt.toMillis() : 0,
+    lineup: active.lineup,
+    lineup2: active.lineup2,
+    versions,
+    activeVersion,
+    createdAt,
   }
 }
 
@@ -142,21 +195,109 @@ export async function deleteTournament(tid: string): Promise<void> {
   await batch.commit()
 }
 
-export async function saveGame(tid: string, id: string | null, input: Omit<GameInput, 'lineup' | 'lineup2' | 'createdAt'>): Promise<void> {
+/** A version as stored. `by` is who is saving it now; null keeps the last editor as it was. */
+function versionData(v: LineupVersion, by: Editor | null) {
+  return {
+    index: v.index,
+    name: v.name.trim(),
+    lineup: v.lineup,
+    lineup2: v.lineup2,
+    createdBy: v.createdBy,
+    createdAt: v.createdAt ? Timestamp.fromMillis(v.createdAt) : serverTimestamp(),
+    updatedBy: by ?? v.updatedBy,
+    updatedAt: by ? serverTimestamp() : v.updatedAt ? Timestamp.fromMillis(v.updatedAt) : null,
+  }
+}
+
+/**
+ * Applies changes to a game. The top-level lineup always mirrors the version in use, and a game from before
+ * versions gets its lineup stored as the first version on its first change.
+ */
+function updateGame(tid: string, game: Game, changes: Record<string, unknown>, active: LineupVersion): Promise<void> {
+  const data: Record<string, unknown> = {}
+  if (!game.activeVersion) {
+    const first = game.versions[0]
+    data[`versions.${first.id}`] = versionData(first, null)
+  }
+  return updateDoc(doc(gamesCol(tid), game.id), {
+    ...data,
+    ...changes,
+    activeVersion: active.id,
+    lineup: active.lineup,
+    lineup2: active.lineup2,
+    updatedAt: serverTimestamp(),
+  })
+}
+
+export async function saveGame(
+  tid: string,
+  id: string | null,
+  input: Omit<GameInput, 'lineup' | 'lineup2' | 'versions' | 'activeVersion' | 'createdAt'>,
+  by: Editor | null,
+): Promise<void> {
   const data = { ...input, opponent: input.opponent.trim(), label: input.label.trim(), updatedAt: serverTimestamp() }
-  if (id) await setDoc(doc(gamesCol(tid), id), data, { merge: true })
-  else await addDoc(gamesCol(tid), { ...data, lineup: emptyLineup(), lineup2: null, createdAt: serverTimestamp() })
+  if (id) {
+    await setDoc(doc(gamesCol(tid), id), data, { merge: true })
+    return
+  }
+  const first: LineupVersion = {
+    id: FIRST_VERSION,
+    index: 1,
+    name: '',
+    lineup: emptyLineup(),
+    lineup2: null,
+    createdBy: by,
+    createdAt: 0,
+    updatedBy: null,
+    updatedAt: 0,
+  }
+  await addDoc(gamesCol(tid), {
+    ...data,
+    lineup: first.lineup,
+    lineup2: first.lineup2,
+    versions: { [first.id]: versionData(first, by) },
+    activeVersion: first.id,
+    createdAt: serverTimestamp(),
+  })
 }
 
-/** Saves one period's lineup. A null second period follows the first. */
-export function saveLineup(tid: string, gid: string, period: Period, lineup: Lineup | null): Promise<void> {
-  const field = period === 1 ? 'lineup' : 'lineup2'
-  return updateDoc(doc(gamesCol(tid), gid), { [field]: lineup, updatedAt: serverTimestamp() })
+/** Saves a changed version: its lineups or its name. A null second period follows the first. */
+export function saveVersion(tid: string, game: Game, version: LineupVersion, by: Editor | null): Promise<void> {
+  const active = findVersion(game, null)
+  return updateGame(tid, game, { [`versions.${version.id}`]: versionData(version, by) }, active.id === version.id ? version : active)
 }
 
-/** Replaces both periods at once, e.g. when copying another game. */
-export function saveLineups(tid: string, gid: string, lineup: Lineup, lineup2: Lineup | null): Promise<void> {
-  return updateDoc(doc(gamesCol(tid), gid), { lineup, lineup2, updatedAt: serverTimestamp() })
+/** Adds a version, copied from `base` or empty, and puts it in use. Returns its id straight away (also offline). */
+export function createVersion(
+  tid: string,
+  game: Game,
+  base: LineupVersion | null,
+  name: string,
+  by: Editor | null,
+): { id: string; saved: Promise<void> } {
+  // Firestore's own ids are letters and digits only, so they are safe in a field path.
+  const id = doc(gamesCol(tid)).id
+  const version: LineupVersion = {
+    id,
+    index: nextVersionIndex(game.versions),
+    name,
+    lineup: base?.lineup ?? emptyLineup(),
+    lineup2: base?.lineup2 ?? null,
+    createdBy: by,
+    createdAt: 0,
+    updatedBy: null,
+    updatedAt: 0,
+  }
+  return { id, saved: updateGame(tid, game, { [`versions.${id}`]: versionData(version, by) }, version) }
+}
+
+export function setActiveVersion(tid: string, game: Game, version: LineupVersion): Promise<void> {
+  return updateGame(tid, game, {}, version)
+}
+
+/** Removes a version that is not in use. */
+export function deleteVersion(tid: string, game: Game, version: LineupVersion): Promise<void> {
+  return updateGame(tid, game, { [`versions.${version.id}`]: deleteField() }, findVersion(game, null))
 }
 
 export function deleteGame(tid: string, gid: string): Promise<void> {
