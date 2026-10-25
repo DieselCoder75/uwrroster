@@ -23,6 +23,7 @@ import {
   slotOf,
   substitutionsIn,
   summarize,
+  tournamentLoad,
   tournamentNumber,
   type Lineup,
   type Period,
@@ -82,6 +83,12 @@ export function LineupPage() {
   const sum = summarize(lineup)
   const subsIn = new Set(substitutionsIn(first, second))
   const subsOut = new Set(substitutionsIn(second, first))
+  // How much each player plays in the rest of the tournament, to share the load evenly.
+  const otherLoad = tournamentLoad(
+    games.data.filter((g) => g.id !== gid),
+    squad,
+  )
+  const loadOf = (id: string) => otherLoad.get(id)?.periods ?? 0
   const periodDone = (p: Period) => summarize(p === 1 ? first : second).complete
   const prevGame = games.data[gameIndex - 1]
   const nextGame = games.data[gameIndex + 1]
@@ -284,7 +291,15 @@ export function LineupPage() {
                     {lineup[slot].map((id) => {
                       const p = byId.get(id)
                       return p ? (
-                        <PlayerChip key={id} player={p} slot={slot} selected={selected === id} note={noteFor(id)} onTap={() => onChipTap(id)} />
+                        <PlayerChip
+                          key={id}
+                          player={p}
+                          slot={slot}
+                          selected={selected === id}
+                          note={noteFor(id)}
+                          load={loadOf(id)}
+                          onTap={() => onChipTap(id)}
+                        />
                       ) : null
                     })}
                   </ZoneBox>
@@ -302,7 +317,15 @@ export function LineupPage() {
                 {pool.map((id) => {
                   const p = byId.get(id)
                   return p ? (
-                    <PlayerChip key={id} player={p} slot={null} selected={selected === id} note={noteFor(id)} onTap={() => onChipTap(id)} />
+                    <PlayerChip
+                      key={id}
+                      player={p}
+                      slot={null}
+                      selected={selected === id}
+                      note={noteFor(id)}
+                      load={loadOf(id)}
+                      onTap={() => onChipTap(id)}
+                    />
                   ) : null
                 })}
               </ZoneBox>

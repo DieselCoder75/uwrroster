@@ -7,6 +7,7 @@ import {
   onSnapshot,
   serverTimestamp,
   setDoc,
+  Timestamp,
   updateDoc,
   writeBatch,
 } from 'firebase/firestore'
@@ -68,6 +69,7 @@ function gameFromDoc(id: string, d: Record<string, unknown>): Game {
     label: str(d.label),
     lineup: lineupFrom(d.lineup),
     lineup2: d.lineup2 ? lineupFrom(d.lineup2) : null,
+    createdAt: d.createdAt instanceof Timestamp ? d.createdAt.toMillis() : 0,
   }
 }
 
@@ -109,7 +111,9 @@ export function useGames(tid: string): Loadable<Game[]> {
     (set) =>
       onSnapshot(
         gamesCol(tid),
-        (snap) => set({ status: 'ready', data: sortGames(snap.docs.map((d) => gameFromDoc(d.id, d.data()))) }),
+        (snap) =>
+          // A game added a moment ago has no server time yet; the estimate keeps it last.
+          set({ status: 'ready', data: sortGames(snap.docs.map((d) => gameFromDoc(d.id, d.data({ serverTimestamps: 'estimate' })))) }),
         (e) => set({ status: 'error', message: e.message }),
       ),
     [tid],
@@ -137,7 +141,7 @@ export async function deleteTournament(tid: string): Promise<void> {
   await batch.commit()
 }
 
-export async function saveGame(tid: string, id: string | null, input: Omit<GameInput, 'lineup' | 'lineup2'>): Promise<void> {
+export async function saveGame(tid: string, id: string | null, input: Omit<GameInput, 'lineup' | 'lineup2' | 'createdAt'>): Promise<void> {
   const data = { ...input, opponent: input.opponent.trim(), label: input.label.trim(), updatedAt: serverTimestamp() }
   if (id) await setDoc(doc(gamesCol(tid), id), data, { merge: true })
   else await addDoc(gamesCol(tid), { ...data, lineup: emptyLineup(), lineup2: null, createdAt: serverTimestamp() })

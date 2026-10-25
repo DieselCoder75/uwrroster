@@ -84,6 +84,7 @@ export function PlayerChip({
   selected,
   clash,
   note,
+  load,
   onTap,
 }: {
   player: Player
@@ -92,6 +93,8 @@ export function PlayerChip({
   clash?: boolean
   /** Short marker such as "In" for a substitution. */
   note?: { text: string; kind: 'in' | 'out' }
+  /** Periods played in the tournament's other games. */
+  load?: number
   onTap: () => void
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: player.id })
@@ -104,7 +107,7 @@ export function PlayerChip({
       {...attributes}
       {...listeners}
     >
-      <ChipBody player={player} slot={slot} clash={clash} note={note} />
+      <ChipBody player={player} slot={slot} clash={clash} note={note} load={load} />
     </button>
   )
 }
@@ -115,12 +118,14 @@ export function ChipBody({
   lifted,
   clash,
   note,
+  load,
 }: {
   player: Player
   slot: Slot | null
   lifted?: boolean
   clash?: boolean
   note?: { text: string; kind: 'in' | 'out' }
+  load?: number
 }) {
   const { t } = useI18n()
   const issue = slot ? fitIssue(p, slot) : null
@@ -130,6 +135,11 @@ export function ChipBody({
       <span className="chip-name">{fullName(p)}</span>
       {p.captain && <span className="badge">{t(`captain.short.${p.captain}`)}</span>}
       {note && <span className={`sub-note sub-${note.kind}`}>{note.text}</span>}
+      {load !== undefined && (
+        <span className="load-pill" title={t('load.chipTitle', { count: load })}>
+          {t('load.chip', { count: load })}
+        </span>
+      )}
       {slot === null && (
         <span className="chip-pos">
           {playablePositions(p).map((pos) => (

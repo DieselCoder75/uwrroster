@@ -39,6 +39,8 @@ export type Game = {
   lineup: Lineup
   /** Second-period lineup, picked from the same 15. Null means the same as the first period. */
   lineup2: Lineup | null
+  /** When the game was added, in milliseconds; orders games that share a time. */
+  createdAt: number
 }
 
 export type GameInput = Omit<Game, 'id'>
@@ -141,11 +143,41 @@ export function summarize(lineup: Lineup): LineupSummary {
   return { inGame, subs: lineup.SUB.length, complete }
 }
 
+/** By date and time; games without a date or time go after the timed ones, and ties keep the order they were added in. */
 export function sortGames(games: Game[]): Game[] {
-  return [...games].sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`))
+  const key = (g: Game) => `${g.date || '9999-99-99'} ${g.time || '99:99'}`
+  return [...games].sort((a, b) => key(a).localeCompare(key(b)) || a.createdAt - b.createdAt)
 }
 
 export function sortTournaments(list: Tournament[]): Tournament[] {
   // Newest first; undated ones at the end.
   return [...list].sort((a, b) => (b.startDate || '0').localeCompare(a.startDate || '0') || a.name.localeCompare(b.name))
+}
+
+/** Where a player is in each period of one game: a position, the bench ('SUB'), or null when not among the game's 15. */
+export type PeriodUse = [Slot | null, Slot | null]
+
+export type PlayerLoad = {
+  /** Periods played in the water (GK, DEF or ATT) across the tournament. */
+  periods: number
+  byGame: Record<string, PeriodUse>
+}
+
+/** How many periods each squad player plays across the tournament's games, and where. */
+export function tournamentLoad(games: Game[], squad: string[]): Map<string, PlayerLoad> {
+  const load = new Map<string, PlayerLoad>(squad.map((id) => [id, { periods: 0, byGame: {} }]))
+  for (const g of games) {
+    const { first, second } = gameLineups(g, squad)
+    for (const [id, l] of load) {
+      const use: PeriodUse = [slotOf(first, id), slotOf(second, id)]
+      l.byGame[g.id] = use
+      l.periods += use.filter((s) => s !== null && s !== 'SUB').length
+    }
+  }
+  return load
+}
+
+/** Periods with a lineup so far: a game counts once it has anyone in it. */
+export function plannedPeriods(games: Game[], squad: string[]): number {
+  return games.filter((g) => lineupIds(gameLineups(g, squad).first).length > 0).length * PERIODS.length
 }
