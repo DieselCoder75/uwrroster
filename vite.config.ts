@@ -1,9 +1,13 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+import { readBuildInfo } from './build-info.ts'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  define: {
+    __BUILD_INFO__: JSON.stringify(readBuildInfo()),
+  },
   build: {
     // Firebase alone is about 630 kB; it is cached on the device after the first visit.
     chunkSizeWarningLimit: 700,
