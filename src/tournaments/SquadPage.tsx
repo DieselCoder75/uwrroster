@@ -2,6 +2,7 @@ import { DndContext, DragOverlay, type DragEndEvent, type DragStartEvent } from 
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { PageHero } from '../components/PageHero'
+import { SaveStatus } from '../components/SaveStatus'
 import { SearchBox } from '../components/SearchBox'
 import { useI18n } from '../i18n'
 import { POSITIONS, fullName, matchesSearch, type Player } from '../players/model'
@@ -152,7 +153,7 @@ export function SquadPage() {
         <strong className={squad.length > tour.squadSize ? 'warn' : squad.length === tour.squadSize ? 'ok-text' : ''}>
           {t('squad.selected', { count: squad.length })} / {tour.squadSize}
         </strong>
-        <span className="muted small">{pending > 0 ? t('lineup.saving') : t('lineup.saved')}</span>
+        <SaveStatus pending={pending} />
         <span className="grow" />
         {selectedPlayer && (
           // Long lists on phones: move the tapped player without scrolling to the other area.

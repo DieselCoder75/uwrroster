@@ -3,8 +3,11 @@ import type { Player } from '../src/players/model'
 import {
   emptyLineup,
   fitIssue,
+  gameLineups,
+  moveProblem,
   movePlayer,
   pruneLineup,
+  substitutionsIn,
   slotLimit,
   slotOf,
   sortGames,
@@ -82,6 +85,43 @@ describe('lineup summary', () => {
     expect(summarize({ ...full, SUB: ['s1', 's2', 's3', 's4'] }).complete).toBe(false)
     expect(summarize({ ...full, SUB: ['s1', 's2'] }).complete).toBe(false)
     expect(summarize({ ...full, GK: ['g1'] })).toMatchObject({ inGame: 9, complete: false })
+  })
+})
+
+describe('periods and substitutions', () => {
+  const four = (p: string) => [1, 2, 3, 4].map((i) => p + i)
+  const first = lineup({ GK: four('g'), DEF: four('d'), ATT: four('a'), SUB: ['s1', 's2', 's3'] })
+  const squad = [...four('g'), ...four('d'), ...four('a'), 's1', 's2', 's3', 'x']
+
+  it('plays the second period like the first until it is changed', () => {
+    const { second, secondSame } = gameLineups({ lineup: first, lineup2: null }, squad)
+    expect(secondSame).toBe(true)
+    expect(second).toEqual(first)
+  })
+
+  it('keeps the second period to the starting 15', () => {
+    const lineup2 = lineup({ ...first, GK: ['x', 'g2', 'g3', 'g4'], SUB: ['g1', 's2', 's3'] })
+    const { second } = gameLineups({ lineup: first, lineup2 }, squad)
+    expect(second.GK).toEqual(['g2', 'g3', 'g4'])
+  })
+
+  it('counts the players who come in at the break', () => {
+    const second = lineup({ GK: ['s1', 'g2', 'g3', 'g4'], DEF: ['g1', 'd2', 'd3', 'd4'], ATT: four('a'), SUB: ['d1', 's2', 's3'] })
+    // g1 only changes position; s1 comes in for d1.
+    expect(substitutionsIn(first, second)).toEqual(['s1'])
+    expect(substitutionsIn(second, first)).toEqual(['d1'])
+  })
+
+  it('allows at most 15 players in a game', () => {
+    expect(moveProblem(first, 'x', 'SUB', 1, [])).toBe('gameFull')
+    expect(moveProblem(first, 'g1', 'DEF', 1, [])).toBeNull()
+    expect(moveProblem(first, 'x', null, 1, [])).toBeNull()
+  })
+
+  it('only lets the starting 15 play the second period', () => {
+    const starting15 = squad.filter((id) => id !== 'x')
+    expect(moveProblem(first, 'x', 'ATT', 2, starting15)).toBe('notInGame')
+    expect(moveProblem(first, 's1', 'ATT', 2, starting15)).toBeNull()
   })
 })
 

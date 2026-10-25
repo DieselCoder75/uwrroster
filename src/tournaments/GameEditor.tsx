@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Sheet } from '../components/Sheet'
 import { useI18n } from '../i18n'
 import type { Cap, Game } from './model'
+import { whenSaved } from '../lib/online'
 import { deleteGame, saveGame } from './store'
 
 type Props = {
@@ -28,7 +29,7 @@ export function GameEditor({ tournamentId, game, defaultDate, onClose, onDeleted
     setBusy(true)
     setError(null)
     try {
-      await saveGame(tournamentId, game?.id ?? null, { opponent, label, date, time, cap })
+      await whenSaved(saveGame(tournamentId, game?.id ?? null, { opponent, label, date, time, cap }))
       onClose()
     } catch (err) {
       setError(t('app.error', { message: (err as Error).message }))
@@ -40,7 +41,7 @@ export function GameEditor({ tournamentId, game, defaultDate, onClose, onDeleted
     if (!game || !window.confirm(t('game.deleteConfirm', { name: game.label || game.opponent }))) return
     setBusy(true)
     try {
-      await deleteGame(tournamentId, game.id)
+      await whenSaved(deleteGame(tournamentId, game.id))
       onClose()
       onDeleted?.()
     } catch (err) {

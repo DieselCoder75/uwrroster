@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { connectAuthEmulator, getAuth } from 'firebase/auth'
-import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore'
+import { connectFirestoreEmulator, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore'
 
 const env = import.meta.env
 
@@ -16,7 +16,11 @@ const app = initializeApp({
 })
 
 export const auth = getAuth(app)
-export const db = getFirestore(app)
+// Keep a copy of the data on the device so the app works on a poor pool-side connection:
+// pages open from the cache and changes are sent when the connection comes back.
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+})
 
 if (env.VITE_USE_EMULATORS === 'true') {
   connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true })

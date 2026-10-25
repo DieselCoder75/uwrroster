@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Sheet } from '../components/Sheet'
 import { useI18n } from '../i18n'
 import { DEFAULT_SQUAD_SIZE, type Tournament } from './model'
+import { whenSaved } from '../lib/online'
 import { deleteTournament, saveTournament } from './store'
 
 type Props = {
@@ -29,7 +30,7 @@ export function TournamentEditor({ tournament, onClose, onSaved, onDeleted }: Pr
     setBusy(true)
     setError(null)
     try {
-      const id = await saveTournament(tournament?.id ?? null, {
+      const { id, saved } = saveTournament(tournament?.id ?? null, {
         name,
         location,
         startDate,
@@ -38,6 +39,7 @@ export function TournamentEditor({ tournament, onClose, onSaved, onDeleted }: Pr
         squad: tournament?.squad ?? [],
         numbers: tournament?.numbers ?? {},
       })
+      await whenSaved(saved)
       onClose()
       onSaved?.(id)
     } catch (err) {
@@ -50,7 +52,7 @@ export function TournamentEditor({ tournament, onClose, onSaved, onDeleted }: Pr
     if (!tournament || !window.confirm(t('tournament.deleteConfirm', { name: tournament.name }))) return
     setBusy(true)
     try {
-      await deleteTournament(tournament.id)
+      await whenSaved(deleteTournament(tournament.id))
       onClose()
       onDeleted?.()
     } catch (err) {

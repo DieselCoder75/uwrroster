@@ -1,9 +1,9 @@
-/** The team website's logo: slanted mark, UPPOPALLONAISET, and the app's own tag. */
+/** The team website's slanted mark with the app's name: UWR Roster. */
 export function Brand() {
   return (
     <span className="brand">
       <span className="brand-mark" aria-hidden="true" />
-      <span className="brand-name">Uppopallonaiset</span>
+      <span className="brand-name">UWR</span>
       <span className="brand-tag">Roster</span>
     </span>
   )

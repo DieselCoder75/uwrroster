@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Sheet } from '../components/Sheet'
 import { useI18n } from '../i18n'
 import { POSITIONS, duplicateNumbers, fullName, type Player } from '../players/model'
+import { whenSaved } from '../lib/online'
 import { saveSquad } from './store'
 
 type Props = {
@@ -37,10 +38,12 @@ export function NumbersEditor({ tournamentId, squad, numbers, players, onClose }
         const n = parsed(p.id)
         if (n !== null && n !== p.number) overrides[p.id] = n
       }
-      await saveSquad(
-        tournamentId,
-        picked.map((p) => p.id),
-        overrides,
+      await whenSaved(
+        saveSquad(
+          tournamentId,
+          picked.map((p) => p.id),
+          overrides,
+        ),
       )
       onClose()
     } catch (e) {

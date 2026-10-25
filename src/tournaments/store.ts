@@ -21,6 +21,7 @@ import {
   type Game,
   type GameInput,
   type Lineup,
+  type Period,
   type Tournament,
   type TournamentInput,
 } from './model'
@@ -66,6 +67,7 @@ function gameFromDoc(id: string, d: Record<string, unknown>): Game {
     cap: d.cap === 'blue' || d.cap === 'white' ? d.cap : null,
     label: str(d.label),
     lineup: lineupFrom(d.lineup),
+    lineup2: d.lineup2 ? lineupFrom(d.lineup2) : null,
   }
 }
 
@@ -114,14 +116,12 @@ export function useGames(tid: string): Loadable<Game[]> {
   )
 }
 
-export async function saveTournament(id: string | null, input: TournamentInput): Promise<string> {
+/** Returns the tournament id straight away (also offline) and the write to wait for. */
+export function saveTournament(id: string | null, input: TournamentInput): { id: string; saved: Promise<void> } {
   const data = { ...input, name: input.name.trim(), location: input.location.trim(), updatedAt: serverTimestamp() }
-  if (id) {
-    await setDoc(doc(tournamentsCol, id), data, { merge: true })
-    return id
-  }
-  const ref = await addDoc(tournamentsCol, { ...data, createdAt: serverTimestamp() })
-  return ref.id
+  if (id) return { id, saved: setDoc(doc(tournamentsCol, id), data, { merge: true }) }
+  const ref = doc(tournamentsCol)
+  return { id: ref.id, saved: setDoc(ref, { ...data, createdAt: serverTimestamp() }) }
 }
 
 export function saveSquad(tid: string, squad: string[], numbers: Record<string, number>): Promise<void> {
@@ -137,14 +137,21 @@ export async function deleteTournament(tid: string): Promise<void> {
   await batch.commit()
 }
 
-export async function saveGame(tid: string, id: string | null, input: Omit<GameInput, 'lineup'>): Promise<void> {
+export async function saveGame(tid: string, id: string | null, input: Omit<GameInput, 'lineup' | 'lineup2'>): Promise<void> {
   const data = { ...input, opponent: input.opponent.trim(), label: input.label.trim(), updatedAt: serverTimestamp() }
   if (id) await setDoc(doc(gamesCol(tid), id), data, { merge: true })
-  else await addDoc(gamesCol(tid), { ...data, lineup: emptyLineup(), createdAt: serverTimestamp() })
+  else await addDoc(gamesCol(tid), { ...data, lineup: emptyLineup(), lineup2: null, createdAt: serverTimestamp() })
 }
 
-export function saveLineup(tid: string, gid: string, lineup: Lineup): Promise<void> {
-  return updateDoc(doc(gamesCol(tid), gid), { lineup, updatedAt: serverTimestamp() })
+/** Saves one period's lineup. A null second period follows the first. */
+export function saveLineup(tid: string, gid: string, period: Period, lineup: Lineup | null): Promise<void> {
+  const field = period === 1 ? 'lineup' : 'lineup2'
+  return updateDoc(doc(gamesCol(tid), gid), { [field]: lineup, updatedAt: serverTimestamp() })
+}
+
+/** Replaces both periods at once, e.g. when copying another game. */
+export function saveLineups(tid: string, gid: string, lineup: Lineup, lineup2: Lineup | null): Promise<void> {
+  return updateDoc(doc(gamesCol(tid), gid), { lineup, lineup2, updatedAt: serverTimestamp() })
 }
 
 export function deleteGame(tid: string, gid: string): Promise<void> {

@@ -40,6 +40,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (snap.exists()) {
             const role: Role = snap.data().role === 'admin' ? 'admin' : 'coach'
             setState({ status: 'coach', user, email, role })
+          } else if (snap.metadata.fromCache) {
+            // Not cached on this device yet: wait for the server rather than turning the coach away while offline.
+            setState({ status: 'loading' })
           } else {
             setState({ status: 'notInvited', user, email })
           }

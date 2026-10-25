@@ -1,10 +1,8 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
-import { heroSrcSet, type HeroImage } from '../components/heroImages'
 import { PageHero } from '../components/PageHero'
 import { useI18n } from '../i18n'
-import { formatRange } from '../lib/dates'
+import { daysUntil, formatRange, todayIso } from '../lib/dates'
 import { useTournaments } from '../tournaments/store'
 
 export function HomePage() {
@@ -12,97 +10,77 @@ export function HomePage() {
   const auth = useAuth()
   const email = auth.status === 'coach' ? auth.email : ''
   const tournaments = useTournaments()
-  const now = useNow()
 
-  const d = new Date(now)
-  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-  const next =
+  const today = todayIso()
+  // Tournaments that haven't ended yet, soonest first.
+  const upcoming =
     tournaments.status === 'ready'
-      ? [...tournaments.data].filter((x) => x.startDate >= today).sort((a, b) => a.startDate.localeCompare(b.startDate))[0]
-      : undefined
-
-  const tiles: { to: string; image: HeroImage; title: string; desc: string }[] = [
-    { to: '/players', image: 'pelaajat', title: t('nav.players'), desc: t('home.playersDesc') },
-    { to: '/tournaments', image: 'em-pronssimitalistit', title: t('nav.tournaments'), desc: t('home.tournamentsDesc') },
-    { to: '/coaches', image: 'naisten-joukkue-altaalla', title: t('nav.coaches'), desc: t('home.coachesDesc') },
-  ]
+      ? tournaments.data
+          .filter((x) => x.startDate && (x.endDate || x.startDate) >= today)
+          .sort((a, b) => a.startDate.localeCompare(b.startDate))
+      : []
 
   return (
     <div className="stack">
       <PageHero
         image="20250927-172557"
-        tag={t('hero.tag')}
+        tag={t('home.tag')}
         title={
           <>
-            {t('home.heroTitle1')} <span className="accent">{t('home.heroTitle2')}</span>
+            UWR <span className="accent">Roster</span>
           </>
         }
-        sub={
-          next ? (
-            <Link to={`/tournaments/${next.id}`}>
-              {t('home.next')} · <span className="accent">{next.name}</span>
-              <span className="hero-sub-detail">
-                {[formatRange(next.startDate, next.endDate, lang), next.location].filter(Boolean).join(' · ')}
-              </span>
-            </Link>
-          ) : (
-            t('home.intro')
-          )
-        }
+        sub={t('home.intro')}
       />
 
-      {next && <Countdown target={next.startDate} now={now} />}
+      <section className="stack">
+        <div className="section-head">
+          <h2>{t('home.upcoming')}</h2>
+          <Link to="/tournaments" className="btn btn-small">
+            {t('home.allTournaments')} →
+          </Link>
+        </div>
 
-      <ul className="feature-grid">
-        {tiles.map((tile) => (
-          <li key={tile.to}>
-            <Link to={tile.to} className="feature">
-              <img srcSet={heroSrcSet(tile.image)} sizes="(min-width: 900px) 33vw, 100vw" alt="" />
-              <span className="feature-shade" />
-              <span className="feature-text">
-                <span className="bar" />
-                <span className="feature-title">{tile.title}</span>
-                <span className="feature-desc">{tile.desc}</span>
-                <span className="feature-more">{t('home.open')} →</span>
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
+        {tournaments.status === 'loading' && <p className="muted">{t('app.loading')}</p>}
+        {tournaments.status === 'error' && <p className="error">{t('app.error', { message: tournaments.message })}</p>}
+        {tournaments.status === 'ready' && upcoming.length === 0 && <p className="muted">{t('home.noUpcoming')}</p>}
+
+        <ul className="upcoming">
+          {upcoming.map((tour) => {
+            const days = daysUntil(tour.startDate, today)
+            return (
+              <li key={tour.id}>
+                <Link to={`/tournaments/${tour.id}`} className="card upcoming-row">
+                  <span className="days-left">
+                    {days > 0 ? (
+                      <>
+                        <span className="outline-num days-num">{days}</span>
+                        <span className="days-label">{t(days === 1 ? 'home.day' : 'home.days')}</span>
+                      </>
+                    ) : (
+                      <span className="days-label now">{t('home.ongoing')}</span>
+                    )}
+                  </span>
+                  <span className="upcoming-text">
+                    <span className="eyebrow">{formatRange(tour.startDate, tour.endDate, lang)}</span>
+                    <span className="upcoming-name">{tour.name}</span>
+                    <span className="muted small">
+                      {[tour.location, t('tournaments.squadCount', { count: tour.squad.length, size: tour.squadSize })]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </span>
+                  </span>
+                  <span className="upcoming-arrow" aria-hidden="true">
+                    →
+                  </span>
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+      </section>
 
       <p className="muted small">{t('home.signedIn', { email })}</p>
-    </div>
-  )
-}
-
-function useNow(): number {
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), 1000)
-    return () => window.clearInterval(id)
-  }, [])
-  return now
-}
-
-/** Days, hours, minutes and seconds to the start of a tournament, like the countdown on the team website. */
-function Countdown({ target, now }: { target: string; now: number }) {
-  const { t } = useI18n()
-  const [y, m, d] = target.split('-').map(Number)
-  const left = Math.max(0, Math.floor((new Date(y, m - 1, d).getTime() - now) / 1000))
-  const parts = [
-    { value: Math.floor(left / 86400), label: t('home.days'), accent: true },
-    { value: Math.floor(left / 3600) % 24, label: t('home.hours') },
-    { value: Math.floor(left / 60) % 60, label: t('home.minutes') },
-    { value: left % 60, label: t('home.seconds'), accent: true },
-  ]
-  return (
-    <div className="countdown" role="timer">
-      {parts.map((p) => (
-        <div key={p.label} className="countdown-part">
-          <div className={`countdown-num ${p.accent ? 'accent' : ''}`}>{p.value}</div>
-          <div className="countdown-label">{p.label}</div>
-        </div>
-      ))}
     </div>
   )
 }
