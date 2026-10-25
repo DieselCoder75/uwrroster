@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
+import { signInWithGoogle } from '../auth/googleSignIn'
 import { completeSignIn, isSignInLink, pendingEmail, sendLink } from '../auth/signInLink'
 import { Brand, Footer } from '../components/Brand'
 import { LanguageSwitch } from '../components/LanguageSwitch'
@@ -62,6 +63,18 @@ export function LoginPage() {
     }
   }
 
+  async function onGoogle() {
+    setBusy(true)
+    setError(null)
+    try {
+      await signInWithGoogle()
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   function onConfirm(e: FormEvent) {
     e.preventDefault()
     if (isValidEmail(email)) void finish(email)
@@ -74,6 +87,10 @@ export function LoginPage() {
         {step.kind === 'enterEmail' && (
           <form onSubmit={onSend} className="stack">
             <h2>{t('login.title')}</h2>
+            <button type="button" className="btn btn-primary" disabled={busy} onClick={onGoogle}>
+              {t('login.google')}
+            </button>
+            <div className="login-or">{t('login.or')}</div>
             <p className="muted">{t('login.intro')}</p>
             <label className="field">
               <span>{t('login.email')}</span>
@@ -86,7 +103,7 @@ export function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
               />
             </label>
-            <button className="btn btn-primary" disabled={busy || !isValidEmail(email)}>
+            <button className="btn" disabled={busy || !isValidEmail(email)}>
               {busy ? t('login.sending') : t('login.send')}
             </button>
           </form>

@@ -882,6 +882,23 @@ fieldset.field legend {
   padding: 72px var(--gutter) 48px;
 }
 
+.login-or {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.login-or::before,
+.login-or::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid rgba(41, 224, 255, 0.22);
+}
+
 .login-card {
   width: 100%;
   max-width: 440px;
