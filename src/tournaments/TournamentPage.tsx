@@ -9,7 +9,7 @@ import { GameEditor } from './GameEditor'
 import { GameName } from './GameName'
 import { LoadTable } from './LoadTable'
 import { TournamentEditor } from './TournamentEditor'
-import { gameLineups, squadNumberClashes, summarize, tournamentNumber, type Game } from './model'
+import { findVersion, gameLineups, squadNumberClashes, summarize, tournamentNumber, versionLabel, type Game } from './model'
 import { useGames, useTournament } from './store'
 
 export function TournamentPage() {
@@ -88,7 +88,13 @@ export function TournamentPage() {
                     <span className="game-title">
                       <GameName game={g} />
                     </span>
-                    {g.label && <span className="game-label muted small">{g.label}</span>}
+                    {(g.label || g.versions.length > 1) && (
+                      <span className="game-label muted small">
+                        {[g.label, g.versions.length > 1 && t('version.label', { label: versionLabel(findVersion(g, null)) })]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </span>
+                    )}
                     <span className={`status-pill ${ready ? 'ok' : sum.inGame + sum.subs === 0 ? '' : 'partial'}`}>
                       {sum.inGame + sum.subs === 0
                         ? t('games.lineupEmpty')

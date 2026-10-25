@@ -2049,3 +2049,27 @@ ul.tiles {
   color: var(--muted-2);
   white-space: nowrap;
 }
+
+/* Lineup versions: the picker with its in-use badge, who made and edited it, and the version actions. */
+.version-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.version-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.version-row .status-pill {
+  margin-bottom: 8px;
+}
+
+.version-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}

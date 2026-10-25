@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { Player } from '../src/players/model'
 import {
+  editorName,
   emptyLineup,
+  findVersion,
   fitIssue,
   gameLineups,
   gameTitle,
   moveProblem,
+  nextVersionIndex,
   movePlayer,
   pruneLineup,
   substitutionsIn,
@@ -18,6 +21,7 @@ import {
   squadNumberClashes,
   summarize,
   tournamentNumber,
+  versionLabel,
   type Game,
   type Lineup,
   type Tournament,
@@ -214,5 +218,36 @@ describe('game title', () => {
 
   it('shows only the opponent while the cap colour is not known', () => {
     expect(gameTitle({ opponent: 'Norway', cap: null })).toBe('vs Norway')
+  })
+})
+
+describe('lineup versions', () => {
+  const v = (id: string, index: number, name = '') => ({ id, index, name })
+  const game = { versions: [v('v1', 1), v('b', 2, 'Kova avaus'), v('c', 3)], activeVersion: 'b' } as unknown as Pick<
+    Game,
+    'versions' | 'activeVersion'
+  >
+
+  it('opens the asked version, else the one in use', () => {
+    expect(findVersion(game, 'c').id).toBe('c')
+    expect(findVersion(game, null).id).toBe('b')
+    expect(findVersion(game, 'gone').id).toBe('b')
+    expect(findVersion({ ...game, activeVersion: '' }, null).id).toBe('v1')
+  })
+
+  it('numbers new versions after the highest, even when one was deleted', () => {
+    expect(nextVersionIndex([v('a', 1), v('c', 3)])).toBe(4)
+    expect(nextVersionIndex([])).toBe(1)
+  })
+
+  it('labels versions by number and name', () => {
+    expect(versionLabel(v('b', 2, 'Kova avaus'))).toBe('#2 Kova avaus')
+    expect(versionLabel(v('c', 3))).toBe('#3')
+  })
+
+  it("names an editor by their name, else their email's first part", () => {
+    expect(editorName({ email: 'janne@example.com', name: 'Janne Lind' })).toBe('Janne Lind')
+    expect(editorName({ email: 'janne@example.com', name: '' })).toBe('janne')
+    expect(editorName(null)).toBe('')
   })
 })
