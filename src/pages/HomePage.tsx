@@ -3,6 +3,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { PageHero } from '../components/PageHero'
 import { useI18n } from '../i18n'
 import { daysUntil, formatRange, todayIso } from '../lib/dates'
+import { KindTag } from '../tournaments/KindTag'
 import { useTournaments } from '../tournaments/store'
 import { useTeam } from '../teams/TeamProvider'
 
@@ -60,7 +61,7 @@ export function HomePage() {
                   </span>
                   <span className="upcoming-text">
                     <span className="eyebrow">
-                      {tour.kind === 'camp' && <span className="kind-tag">{t('event.kind.camp')}</span>}
+                      <KindTag kind={tour.kind} />
                       {formatRange(tour.startDate, tour.endDate, lang)}
                     </span>
                     <span className="upcoming-name">{tour.name}</span>

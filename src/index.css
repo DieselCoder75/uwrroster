@@ -41,6 +41,8 @@
   --border: #10263b;
   --primary: #29e0ff;
   --primary-text: #04121f;
+  /* Orange tells tournaments apart from cyan camps; dark text on it is about 9:1. */
+  --tournament: #ff9d2e;
   --danger: #ff7a6e;
   --notice-bg: #072d5c;
   --surface-2: #060f1c;
@@ -121,7 +123,8 @@ a {
   min-height: var(--header-h);
   padding: 10px clamp(16px, 2.2vw, 28px);
   padding-top: max(10px, env(safe-area-inset-top));
-  background: rgba(4, 9, 15, 0.72);
+  /* Opaque enough that bright hero buttons scrolling under it do not show through. */
+  background: rgba(4, 9, 15, 0.92);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid rgba(41, 224, 255, 0.14);
@@ -570,6 +573,22 @@ a {
   .hero-count-label {
     margin-top: 0;
   }
+
+  /* Two buttons share the row in equal widths, or stack full width when they do not fit. */
+  .hero-side:has(.hero-actions) {
+    flex-wrap: wrap;
+  }
+
+  .hero-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    flex: 1 1 100%;
+  }
+
+  .hero-actions .btn {
+    padding-inline: 12px;
+    font-size: 12px;
+  }
 }
 
 .bar {
@@ -743,6 +762,29 @@ fieldset.field legend {
   background: #7fedff;
   border-color: #7fedff;
   box-shadow: 0 0 24px rgba(41, 224, 255, 0.5);
+}
+
+.btn-slant {
+  position: relative;
+  isolation: isolate;
+  /* The 2px edge is the button's own background; the fill sits inset on top, so the slanted sides keep their line too. */
+  background: rgba(41, 224, 255, 0.55);
+  border: 0;
+  clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+  padding-inline: 22px;
+}
+
+.btn-slant::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  z-index: -1;
+  background: var(--surface);
+  clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%);
+}
+
+.btn-slant:hover:not(:disabled) {
+  background: var(--primary);
 }
 
 .btn-danger {
@@ -2116,6 +2158,10 @@ ul.tiles {
   padding: 0 6px;
   color: var(--primary-text);
   background: var(--primary);
+}
+
+.kind-tag.kind-tournament {
+  background: var(--tournament);
 }
 
 .pools {
