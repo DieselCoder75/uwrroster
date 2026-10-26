@@ -43,8 +43,8 @@ export function Layout() {
           <NavLink to="/" end>
             {t('nav.home')}
           </NavLink>
-          <NavLink to="/players">{t('nav.players')}</NavLink>
           <NavLink to="/tournaments">{t('nav.tournaments')}</NavLink>
+          <NavLink to="/players">{t('nav.players')}</NavLink>
           {admin && <NavLink to="/admin">{t('nav.admin')}</NavLink>}
           <div className="nav-tools">
             <TeamSwitch onSwitch={() => setMenuOpen(false)} />
