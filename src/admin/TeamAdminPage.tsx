@@ -89,7 +89,7 @@ function TeamAdmin({ team }: { team: Team }) {
     <div className="stack">
       <PageHero
         compact
-        image="naisten-joukkue-altaalla"
+        image="em-pronssimitalistit"
         top={
           <Link to="/admin/teams" className="back-link">
             {t('admin.teams.back')}

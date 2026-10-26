@@ -17,7 +17,7 @@ export function heroSrcSet(image: HeroImage): string {
 
 /** The app's own photo for each page, shown until a team sets its own. */
 export const DEFAULT_HERO: Record<HeroPage, { image: HeroImage; focus?: string }> = {
-  home: { image: 'em-pronssimitalistit' },
+  home: { image: 'naisten-joukkue-altaalla' },
   players: { image: 'pelaajat', focus: 'center 40%' },
   tournaments: { image: '20250927-172557' },
   tournament: { image: 'keskikentta' },
