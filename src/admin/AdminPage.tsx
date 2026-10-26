@@ -20,7 +20,7 @@ export function AdminPage({ tab }: { tab: 'users' | 'teams' }) {
   return (
     <div className="stack">
       <PageHero
-        image="naisten-joukkue-altaalla"
+        image="em-pronssimitalistit"
         tag={t('admin.tag')}
         title={t('admin.title')}
         count={tab === 'users' ? users.length : teams.length}
