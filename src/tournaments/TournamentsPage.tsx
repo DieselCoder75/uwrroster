@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { PageHero } from '../components/PageHero'
 import { useI18n } from '../i18n'
 import { daysUntil, formatRange, todayIso } from '../lib/dates'
+import { KindTag } from './KindTag'
 import { TournamentEditor } from './TournamentEditor'
 import { useTournaments } from './store'
 import { useTeam } from '../teams/TeamProvider'
@@ -35,7 +36,7 @@ export function TournamentsPage() {
             <button className="btn btn-primary" onClick={() => setAdding('tournament')}>
               + {t('tournaments.add')}
             </button>
-            <button className="btn" onClick={() => setAdding('camp')}>
+            <button className="btn btn-slant" onClick={() => setAdding('camp')}>
               + {t('camp.add')}
             </button>
           </>
@@ -56,7 +57,7 @@ export function TournamentsPage() {
               )}
               <span className="tile-top">
                 <span className="bar" />
-                {tour.kind === 'camp' && <span className="kind-tag">{t('event.kind.camp')}</span>}
+                <KindTag kind={tour.kind} />
               </span>
               <span className="eyebrow">
                 {formatRange(tour.startDate, tour.endDate, lang)}
