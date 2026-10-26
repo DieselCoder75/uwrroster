@@ -517,6 +517,14 @@ a {
   gap: 8px;
 }
 
+/* Wide screens: several buttons stack in equal widths under the count, so the side stays narrow and the title keeps its row. */
+@media (min-width: 601px) {
+  .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 .hero .back-link {
   display: block;
   width: fit-content;
