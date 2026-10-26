@@ -24,7 +24,7 @@ export const fi = {
   'home.days': 'Päivää',
   'home.signedIn': 'Kirjautuneena: {email}',
   'players.tag': 'Pelaajapooli',
-  'players.inPool': 'Pelaajaa poolissa',
+  'players.inPool': 'Pelaajaa',
   'tournaments.tag': 'Kisat ja leirit',
   'tournaments.countLabel': 'Tapahtumaa',
   'tournament.squadLabel': 'Pelaajaa joukkueessa',
