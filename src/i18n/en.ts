@@ -26,7 +26,7 @@ export const en: Messages = {
   'home.days': 'Days',
   'home.signedIn': 'Signed in as {email}',
   'players.tag': 'Player pool',
-  'players.inPool': 'Players in the pool',
+  'players.inPool': 'Players',
   'tournaments.tag': 'Tournaments and camps',
   'tournaments.countLabel': 'Events',
   'tournament.squadLabel': 'Players in the squad',
