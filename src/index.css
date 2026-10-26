@@ -862,11 +862,12 @@ fieldset.field legend {
   position: relative;
   overflow: hidden;
   min-height: 190px;
-  justify-content: flex-end;
   padding: 22px;
 }
 
+/* Bar, tag, date and name line up at the top of every tile in a row; place and squad stay at the bottom. */
 .tour-tile h2 {
+  margin-bottom: auto;
   font-size: 1.4rem;
   line-height: 1.1;
   max-width: 75%;
